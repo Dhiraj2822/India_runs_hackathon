@@ -1,0 +1,7 @@
+sentence-transformers==2.7.0
+spacy==3.7.4
+rapidfuzz==3.9.0
+pandas==2.2.0
+numpy==1.26.4
+python-dateutil==2.9.0
+pytest==8.1.1
