@@ -30,3 +30,6 @@ venv/
 
 # Output (only commit final submission.csv, not intermediates)
 output/
+
+# Personal study notes — DO NOT PUSH TO GITHUB
+study_notes/
