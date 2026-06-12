@@ -137,6 +137,19 @@ def write_submission(
     assert all(r["reasoning"] and len(r["reasoning"]) > 10 for r in rows), \
         "All reasoning strings must be non-empty (> 10 chars)"
 
+    # ── Candidate ID validation (spec rejection #4) ───────────────────────────
+    # All 100 output IDs must actually exist in the input dataset.
+    if candidates_map:
+        bad_ids = [r["candidate_id"] for r in rows if r["candidate_id"] not in candidates_map]
+        assert not bad_ids, \
+            f"Output contains {len(bad_ids)} candidate_id(s) not in input dataset: {bad_ids[:5]}"
+
+    # ── Score differentiation check (spec rejection #5) ──────────────────────
+    # Scores must not all be the same value — confirms the pipeline is working.
+    unique_scores = len(set(r["score"] for r in rows))
+    assert unique_scores > 50, \
+        f"Only {unique_scores} unique scores across 100 candidates — pipeline may be broken (all same value?)"
+
     # ── Write CSV ─────────────────────────────────────────────────────────────
     df = pd.DataFrame(rows, columns=["candidate_id", "rank", "score", "reasoning"])
     df = df.sort_values("rank").reset_index(drop=True)
