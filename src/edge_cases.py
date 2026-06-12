@@ -68,9 +68,11 @@ def apply_edge_cases(
     score = _ec_willing_to_relocate(candidate, score, jd)
 
     # ── Final score calculation — ALWAYS THE LAST STATEMENT ──────────────────
-    score.final_score = max(0.0, min(1.0,
+    # Round to 4dp to match CSV output precision — ensures raw final_score and
+    # the written CSV value are identical so non-increasing order tests agree.
+    score.final_score = round(max(0.0, min(1.0,
         score.base_score - score.penalty_total + score.bonus_total
-    ))
+    )), 4)
     return score
 
 
