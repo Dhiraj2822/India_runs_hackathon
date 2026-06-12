@@ -1,0 +1,89 @@
+# Redrob Hackathon — Submission Metadata
+# Fill out the remaining placeholders before submitting on the portal!
+
+# ============================================================================
+# Team identity
+# ============================================================================
+team_name: "Dhiraj-Team"          # Change this to your actual registered team name
+primary_contact:
+  name: "Dhiraj"
+  email: "your_email@example.com"  # REQUIRED: Enter your registered email address
+  phone: "+91-XXXXXXXXXX"          # REQUIRED: Enter your contact number for outreach
+
+team_members:
+  - name: "Dhiraj"
+    email: "your_email@example.com"
+    role: "Team Lead & ML Engineer"
+
+# ============================================================================
+# Code and reproducibility
+# ============================================================================
+github_repo: "https://github.com/Dhiraj2822/India_runs_hackathon" # Confirm URL
+sandbox_link: "https://dhiraj-redrob-ranker.streamlit.app"       # REQUIRED: Update after Streamlit deployment
+
+# Command used to reproduce ranking. Ensure participant ID filename matches in --out!
+reproduce_command: "python rank.py --candidates data/raw/candidates.jsonl --out team_abc123.csv"
+submission_file: "team_abc123.csv"                               # REQUIRED: Rename to your registered participant ID .csv
+
+# ============================================================================
+# Model & Pipeline Constraints
+# ============================================================================
+embedding_model: "BAAI/bge-small-en-v1.5"
+has_network_during_ranking: false   # Must be false — ranking is fully local
+uses_gpu_for_inference: false       # Must be false — runs on CPU only
+estimated_runtime_seconds: 430      # Takes ~7 minutes for full 100K dataset
+peak_memory_gb: 4.2                 # Runs comfortably within 16GB limit
+key_libraries:
+  - "pandas"
+  - "spacy"
+  - "sentence-transformers"
+  - "numpy"
+  - "scikit-learn"
+
+# ============================================================================
+# Compute environment
+# ============================================================================
+compute:
+  platform: "Local Windows laptop"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.12.6"
+  os: "Windows 11"
+  uses_gpu_for_inference: false
+  has_network_during_ranking: false
+  pre_computation_required: true    # Downloads BGE and spaCy models once
+  pre_computation_time_minutes: 2
+
+# ============================================================================
+# AI tools declaration
+# ============================================================================
+ai_tools_used:
+  - "Claude"
+  - "Gemini"
+ai_usage_summary: |
+  Used Gemini and Claude for pair programming, code review, architectural design, 
+  re-testing validation, and refactoring edge-case penalties. No candidate data was
+  shared with external AI APIs; the embedding model (BGE) runs entirely locally on CPU.
+
+# ============================================================================
+# Approach summary (Methodology)
+# ============================================================================
+methodology_summary: |
+  A robust and fully deterministic two-stage candidate scoring and ranking system.
+  Stage 1 performs fast structured filtering on all 100,000 profiles (skills, title relevance,
+  availability, location, domain) to select the top 5,000.
+  Stage 2 computes local BAAI/bge-small-en-v1.5 embeddings for semantic fit with the job description
+  and fuses it with skill quality, career fit, experience match, platform signals, and education tier.
+  Includes 15 edge-case detectors (such as consulting penalties, job-hopper rules, and honeypot disqualifications)
+  which downweight unqualified profiles to 0.0. Ranks are sorted by rounded scores with alphabetical
+  candidate ID tie-breaking. Non-templated reasoning is generated using pure profile facts to avoid hallucinations.
+
+# ============================================================================
+# Declarations
+# ============================================================================
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true

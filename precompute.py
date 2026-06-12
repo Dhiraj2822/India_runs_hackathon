@@ -26,7 +26,7 @@ def download_spacy_model():
     )
     if result.returncode != 0:
         raise RuntimeError("spaCy model download failed. Check your internet connection.")
-    print("✅ spaCy en_core_web_sm downloaded.\n")
+    print("[SUCCESS] spaCy en_core_web_sm downloaded.\n")
 
 
 def download_bge_model():
@@ -41,7 +41,7 @@ def download_bge_model():
     # Run a quick test encode to confirm the model works
     test_emb = model.encode("test sentence", convert_to_numpy=True, normalize_embeddings=True)
     assert test_emb.shape == (384,), f"Unexpected embedding shape: {test_emb.shape}"
-    print(f"✅ BGE model cached. Embedding shape: {test_emb.shape}\n")
+    print(f"[SUCCESS] BGE model cached. Embedding shape: {test_emb.shape}\n")
 
 
 def verify_environment():
@@ -50,28 +50,28 @@ def verify_environment():
     print("=" * 60)
     # Check models.py loads
     from src.models import CandidateProfile, CandidateScore
-    print("  ✅ src.models OK")
+    print("  [OK] src.models OK")
 
     # Check data file exists
     candidates_path = Path("data/raw/candidates.jsonl")
     sample_path = Path("data/raw/sample_candidates.json")
     if candidates_path.exists():
         size_mb = candidates_path.stat().st_size / (1024 * 1024)
-        print(f"  ✅ candidates.jsonl found ({size_mb:.0f} MB)")
+        print(f"  [OK] candidates.jsonl found ({size_mb:.0f} MB)")
     else:
-        print("  ⚠️  candidates.jsonl NOT found at data/raw/candidates.jsonl")
+        print("  [WARNING] candidates.jsonl NOT found at data/raw/candidates.jsonl")
         print("       Judges will provide this file. Pipeline will work when present.")
 
     if sample_path.exists():
-        print("  ✅ sample_candidates.json found (for Streamlit demo)")
+        print("  [OK] sample_candidates.json found (for Streamlit demo)")
     else:
-        print("  ⚠️  sample_candidates.json not found — Streamlit demo needs it")
+        print("  [WARNING] sample_candidates.json not found — Streamlit demo needs it")
 
     print()
 
 
 if __name__ == "__main__":
-    print("\n🚀 India Runs Track 1 — Pre-computation Script")
+    print("\n[START] India Runs Track 1 — Pre-computation Script")
     print("This script caches all models. Run ONCE before rank.py.\n")
 
     download_spacy_model()
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     verify_environment()
 
     print("=" * 60)
-    print("✅ Pre-computation complete!")
+    print("[SUCCESS] Pre-computation complete!")
     print("You can now run the ranking pipeline:")
     print("  python rank.py --candidates data/raw/candidates.jsonl --out submission.csv")
     print("=" * 60)

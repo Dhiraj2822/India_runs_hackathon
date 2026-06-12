@@ -159,7 +159,7 @@ def write_submission(
     # ── Run the hackathon validator ───────────────────────────────────────────
     validator_path = Path("validate_submission.py")
     if not validator_path.exists():
-        print("  ⚠️  validate_submission.py not found — skipping validation")
+        print("  [WARNING] validate_submission.py not found — skipping validation")
         return
 
     result = subprocess.run(
@@ -173,4 +173,4 @@ def write_submission(
             f"STDOUT: {result.stdout}\n"
             f"STDERR: {result.stderr}"
         )
-    print(f"  ✅ Submission valid: {result.stdout.strip()}")
+    print(f"  [SUCCESS] Submission valid: {result.stdout.strip()}")
