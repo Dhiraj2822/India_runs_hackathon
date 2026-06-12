@@ -36,7 +36,7 @@ def main():
 
     candidates_path = Path(args.candidates)
     if not candidates_path.exists():
-        print(f"❌ Error: Candidates file not found at: {candidates_path}")
+        print(f"[ERROR] Candidates file not found at: {candidates_path}")
         sys.exit(1)
 
     print(f"Loading candidates from: {candidates_path}...")
@@ -45,7 +45,7 @@ def main():
     print(f"Loaded {len(candidates):,} candidates in {time.time() - t0:.2f}s")
 
     if not candidates:
-        print("❌ Error: No candidates were successfully loaded.")
+        print("[ERROR] No candidates were successfully loaded.")
         sys.exit(1)
 
     print("Loading model and embedding Job Description...")

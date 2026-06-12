@@ -6,7 +6,7 @@ The system processes 100,000 candidate profiles through a deterministic, high-th
 
 ---
 
-## ⚡ Quick Start & Reproduction
+## Quick Start & Reproduction
 
 ### Prerequisites
 
@@ -36,7 +36,7 @@ python validate_submission.py submission.csv
 
 ---
 
-## 🧪 Interactive Streamlit Sandbox
+## Interactive Streamlit Sandbox
 
 An interactive dashboard is available to inspect the pipeline's output, review candidates, and run the ranker dynamically on a 50-candidate sample (`data/raw/sample_candidates.json`):
 
@@ -47,7 +47,7 @@ streamlit run streamlit_app.py
 
 ---
 
-## 🐳 Docker Reproduction
+## Docker Reproduction
 
 To replicate the Stage 3 judge execution environment, build the Docker container:
 
@@ -61,7 +61,7 @@ docker run --network none -v $(pwd)/data:/app/data redrob-ranker python rank.py 
 
 ---
 
-## 🛠️ Pipeline Architecture
+## Pipeline Architecture
 
 The system uses a highly optimized, two-stage ranking process:
 
@@ -83,7 +83,7 @@ The system uses a highly optimized, two-stage ranking process:
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 .

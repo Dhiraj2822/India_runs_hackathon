@@ -30,7 +30,6 @@ from src.ranker import rank_all
 # ─── Page Settings ────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Redrob AI — Candidate Ranker",
-    page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -145,12 +144,12 @@ st.sidebar.title("Configuration & Info")
 
 st.sidebar.markdown(
     f"""
-### 🧠 Neural Engine
+### Neural Engine
 - **Model**: `{EMBEDDING_MODEL}`
 - **Device**: `CPU` (No GPU required)
 - **Framework**: `sentence-transformers`
 
-### ⚖️ Pipeline Weights
+### Pipeline Weights
 **Stage 1: Fast Filter (W1)**
 - Title Match: `{W1_TITLE:.0%}`
 - Skills Match: `{W1_SKILLS:.0%}`
@@ -180,7 +179,7 @@ st.markdown(
 
 # Tabs
 tab_leaderboard, tab_sandbox, tab_reproduce = st.tabs(
-    ["🏆 Ranked Output", "🧪 Live Sandbox", "⚙️ Methodology & CLI"]
+    ["Ranked Output", "Live Sandbox", "Methodology & CLI"]
 )
 
 # ─── TAB 1: Ranked Output (shows submission.csv) ──────────────────────────────
@@ -232,7 +231,7 @@ with tab_sandbox:
     if not sample_path.exists():
         st.error(f"Sample data file not found at: `{sample_path}`")
     else:
-        if st.button("🚀 Run Live Ranking Pipeline", type="primary"):
+        if st.button("Run Live Ranking Pipeline", type="primary"):
             with st.spinner("Initializing models and embedding Job Description..."):
                 try:
                     # 1. Load models
