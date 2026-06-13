@@ -15,7 +15,7 @@ from src.nlp_engine import cosine_similarity
 from config import (
     W1_TITLE, W1_SKILLS, W1_AVAILABILITY, W1_DOMAIN,
     W2_SEMANTIC, W2_SKILL_QUALITY, W2_CAREER_FIT,
-    W2_EXPERIENCE, W2_BEHAVIORAL, W2_EDUCATION,
+    W2_EXPERIENCE, W2_EDUCATION,
     PROFICIENCY_WEIGHTS, EDUCATION_TIER_SCORES,
     JD_REQUIRED_SKILLS, JD_PREFERRED_SKILLS,
     JD_EXPERIENCE_MIN, JD_EXPERIENCE_MAX,
@@ -198,17 +198,18 @@ def compute_base_score(
     skill_quality = _s2_skill_quality(candidate, jd)
     career_fit    = _s2_career_fit(candidate, jd)
     experience    = _s2_experience(candidate, jd)
-    behavioral    = _s2_behavioral(candidate)
     education     = _s2_education(candidate)
 
-    base = (
+    core = (
         semantic      * W2_SEMANTIC      +
         skill_quality * W2_SKILL_QUALITY +
         career_fit    * W2_CAREER_FIT    +
         experience    * W2_EXPERIENCE    +
-        behavioral    * W2_BEHAVIORAL    +
         education     * W2_EDUCATION
     )
+
+    behavioral_mult = _s2_behavioral(candidate)
+    base = core * behavioral_mult
 
     return CandidateScore(
         candidate_id        = candidate.candidate_id,
@@ -216,7 +217,7 @@ def compute_base_score(
         skill_quality_score = skill_quality,
         career_fit_score    = career_fit,
         experience_score    = experience,
-        behavioral_score    = behavioral,
+        behavioral_score    = behavioral_mult,
         education_score     = education,
         base_score          = max(0.0, min(1.0, base)),
     )
@@ -386,53 +387,123 @@ def _s2_experience(candidate: CandidateProfile, jd: JobDescription) -> float:
 
 def _s2_behavioral(candidate: CandidateProfile) -> float:
     """
-    Engagement and availability signals from the Redrob platform.
-    These are multipliers on core fit — a highly engaged candidate with
-    wrong skills still ranks below a less engaged candidate with right skills.
+    Computes a multiplier based on all 23 engagement and availability signals.
+    final = availability_multiplier * engagement_boost
     """
     sig = candidate.redrob_signals
 
-    # Response rate: 30% weight
-    response_score = sig.recruiter_response_rate  # already 0.0-1.0
-
-    # GitHub activity: 20%
-    if sig.github_activity_score < 0:
-        github = 0.50  # neutral if no GitHub
-    else:
-        github = sig.github_activity_score / 100.0
-
-    # Interview completion: 8%
-    interview = sig.interview_completion_rate
-
-    # Offer acceptance rate: 5%
-    if sig.offer_acceptance_rate < 0:
-        offer = 0.50  # neutral
-    else:
-        offer = sig.offer_acceptance_rate
-
-    # Applications submitted: 4%
-    apps = min(1.0, sig.applications_submitted_30d / 5.0)
-
-    # Profile completeness: 6%
-    completeness = sig.profile_completeness_score / 100.0
-
-    # Saved by recruiters: 7%
-    saved = min(1.0, sig.saved_by_recruiters_30d / 5.0)
+    # --- TIER A: Availability (Heavy weight down-modifiers) ---
+    avail = 1.0
     
-    # Remaining 20% distributed to original search appearance / baseline
-    demand = min(1.0, sig.search_appearance_30d / 100.0)
-
-    behavioral = (
-        response_score * 0.30 +
-        github         * 0.20 +
-        interview      * 0.08 +
-        offer          * 0.05 +
-        apps           * 0.04 +
-        completeness   * 0.06 +
-        saved          * 0.07 +
-        demand         * 0.20
-    )
-    return max(0.0, min(1.0, behavioral))
+    # open_to_work_flag
+    if not sig.open_to_work_flag:
+        try:
+            last_active = date.fromisoformat(sig.last_active_date)
+            days_inactive = (date.today() - last_active).days
+        except (ValueError, TypeError):
+            days_inactive = 365
+            
+        if sig.saved_by_recruiters_30d > 5 and days_inactive <= 30:
+            avail *= 0.85  # Passive but active in market
+        else:
+            avail *= 0.30  # Heavy penalty
+            
+    # recruiter_response_rate
+    if sig.recruiter_response_rate < 0.50:
+        avail *= 0.50 + sig.recruiter_response_rate
+        
+    # last_active_date
+    try:
+        last = date.fromisoformat(sig.last_active_date)
+        days_inactive = (date.today() - last).days
+    except (ValueError, TypeError):
+        days_inactive = 365
+    if days_inactive > 180:
+        avail *= 0.40
+    elif days_inactive > 90:
+        avail *= 0.70
+        
+    # interview_completion_rate
+    if sig.interview_completion_rate < 0.7:
+        avail *= sig.interview_completion_rate
+        
+    # notice_period_days
+    if sig.notice_period_days > 60:
+        avail *= 0.80
+    elif sig.notice_period_days > 90:
+        avail *= 0.60
+        
+    # offer_acceptance_rate
+    if sig.offer_acceptance_rate >= 0 and sig.offer_acceptance_rate < 0.5:
+        avail *= 0.85
+        
+    availability_multiplier = max(0.10, avail)
+    
+    # --- TIER B & C: Engagement (Medium/Light weight up-modifiers) ---
+    boost = 1.0
+    
+    # profile_completeness
+    if sig.profile_completeness_score > 90:
+        boost += 0.05
+    elif sig.profile_completeness_score < 50:
+        boost -= 0.10
+        
+    # skill_assessment_scores count
+    if len(sig.skill_assessment_scores) > 0:
+        boost += 0.05
+        
+    # github_activity_score
+    if sig.github_activity_score > 70:
+        boost += 0.10
+        
+    # saved_by_recruiters_30d
+    if sig.saved_by_recruiters_30d > 10:
+        boost += 0.05
+        
+    # applications_submitted_30d
+    if sig.applications_submitted_30d > 0:
+        boost += 0.05
+        
+    # avg_response_time_hours
+    if sig.avg_response_time_hours < 24:
+        boost += 0.05
+        
+    # endorsements_received
+    if sig.endorsements_received > 20:
+        boost += 0.02
+        
+    # willing_to_relocate
+    if sig.willing_to_relocate:
+        boost += 0.02
+        
+    # preferred_work_mode
+    if sig.preferred_work_mode == "hybrid":
+        boost += 0.02
+        
+    # Tier C
+    if sig.profile_views_received_30d > 50: boost += 0.01
+    if sig.search_appearance_30d > 100: boost += 0.01
+    if sig.connection_count > 500: boost += 0.01
+    if sig.verified_email: boost += 0.01
+    if sig.verified_phone: boost += 0.01
+    if sig.linkedin_connected: boost += 0.01
+    
+    # signup_date
+    try:
+        signup = date.fromisoformat(sig.signup_date)
+        days_since_signup = (date.today() - signup).days
+        if days_since_signup > 365 * 3:
+            boost -= 0.02
+    except (ValueError, TypeError):
+        pass
+        
+    # expected salary
+    if sig.expected_salary_max_lpa > 100:
+        boost -= 0.05
+        
+    engagement_boost = min(1.15, max(0.50, boost))
+    
+    return availability_multiplier * engagement_boost
 
 
 def _s2_education(candidate: CandidateProfile) -> float:

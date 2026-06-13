@@ -76,17 +76,24 @@ def rank_all(
         scored_pairs.append((c, score))
     print(f"  Full scoring complete ({time.time()-t2:.1f}s)")
 
-    # Sort by final_score descending; 3-level tie-breaking:
+    # ── Secondary Normalization for Clamped Scores ────────────────────────────
+    # If scores exceed 1.0 natively (causing clamping), scale them proportionally
+    for c, score in scored_pairs:
+        score._raw = score.base_score - score.penalty_total + score.bonus_total
+
+    max_raw = max((score._raw for c, score in scored_pairs), default=1.0)
+    if max_raw > 1.0:
+        for c, score in scored_pairs:
+            normalized = score._raw / max_raw
+            score.final_score = round(max(0.0, normalized), 4)
+
+    # Sort by final_score descending; tie-breaking:
     #   Level 1 (primary)  : rounded 4dp score — matches what appears in submission CSV.
-    #   Level 2 (secondary): raw unrounded score — truer signal wins when rounded scores tie.
-    #   Level 3 (tertiary) : candidate_id ascending — deterministic last resort.
-    # This improves on the spec's pure-alphabetical tie-break by using the actual
-    # underlying score before falling back to candidate ID ordering.
+    #   Level 2 (secondary): candidate_id ascending — deterministic last resort.
     scored_pairs.sort(
         key=lambda x: (
             -round(x[1].final_score, 4),   # primary: rounded score (matches CSV)
-            -x[1].final_score,              # secondary: raw unrounded score
-            x[0].candidate_id,              # tertiary: alphabetical ID
+            x[0].candidate_id,             # secondary: alphabetical ID
         )
     )
 

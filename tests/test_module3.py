@@ -107,7 +107,7 @@ def test_base_score_all_fields_set():
         assert 0.0 <= s.skill_quality_score <= 1.0
         assert 0.0 <= s.career_fit_score <= 1.0
         assert 0.0 <= s.experience_score <= 1.0
-        assert 0.0 <= s.behavioral_score <= 1.0
+        assert 0.0 <= s.behavioral_score <= 1.15
         assert 0.0 <= s.education_score <= 1.0
 
 

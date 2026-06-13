@@ -30,12 +30,11 @@ W1_AVAILABILITY = 0.25   # open_to_work + last_active recency
 W1_DOMAIN       = 0.10   # Industry/domain in tech/AI
 
 # ─── Stage 2 weights (must sum to 1.0) ───────────────────────────────────────
-W2_SEMANTIC      = 0.25  # JD-to-profile semantic similarity
-W2_SKILL_QUALITY = 0.30  # Skill proficiency + duration + endorsements + assessment
-W2_CAREER_FIT    = 0.20  # Title history + company type + production experience
-W2_EXPERIENCE    = 0.10  # Years of experience in JD range
-W2_BEHAVIORAL    = 0.10  # Redrob platform behavioral signals
-W2_EDUCATION     = 0.05  # Education tier and field relevance
+W2_SEMANTIC      = 0.35  # JD-to-profile semantic similarity
+W2_SKILL_QUALITY = 0.28  # Skill proficiency + duration + endorsements + assessment
+W2_CAREER_FIT    = 0.22  # Title history + company type + production experience
+W2_EXPERIENCE    = 0.11  # Years of experience in JD range
+W2_EDUCATION     = 0.04  # Education tier and field relevance
 
 # ─── Proficiency multipliers (for skill quality scoring) ─────────────────────
 PROFICIENCY_WEIGHTS = {
@@ -105,6 +104,7 @@ HONEYPOT_TITLES = {
 AI_ML_TITLES = {
     "ai engineer", "ml engineer", "applied scientist", "search engineer",
     "nlp engineer", "ranking engineer", "retrieval engineer", "research engineer",
+    "recommendation systems engineer", "recommendation engineer",
 }
 
 # ─── Skill synonym groups (for matching variants of the same skill) ───────────
