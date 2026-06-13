@@ -63,6 +63,7 @@ def apply_edge_cases(
     score = _ec_non_coder_architect(candidate, score, jd)
     score = _ec_cv_speech_robotics_only(candidate, score, jd)
     score = _ec_title_chaser(candidate, score, jd)
+    score = _ec_big_tech_plausibility_check(candidate, score, jd)
 
     # ── Phase 3: Bonus edge cases ──────────────────────────────────────────────
     score = _ec_preferred_location(candidate, score, jd)
@@ -148,6 +149,13 @@ def _detect_honeypot(candidate: CandidateProfile) -> CandidateProfile:
         )
         if all_expert_no_evidence and required_covered >= 5:
             reasons.append("perfect_jd_coverage_zero_evidence")
+
+    # ── Check 6: Fictional Companies ──────────────────────────────────────────
+    fictional_companies = {"dunder mifflin", "initech", "hooli", "pied piper", "vandelay industries"}
+    for career_item in candidate.career_history:
+        if career_item.company.lower() in fictional_companies:
+            reasons.append(f"fictional_company:{career_item.company}")
+            break
 
     if reasons:
         candidate.is_honeypot = True
@@ -407,6 +415,30 @@ def _ec_title_chaser(candidate, score, jd):
                 score.penalty_total += score.base_score * 0.30  # Soft penalty (multiplier 0.7x)
         except:
             pass
+    return score
+
+
+def _ec_big_tech_plausibility_check(candidate, score, jd):
+    big_tech = {"meta", "google", "microsoft", "apple", "netflix", "openai"}
+    big_tech_months = 0
+    for c in candidate.career_history:
+        if any(bt in c.company.lower() for bt in big_tech):
+            big_tech_months += c.duration_months
+            
+    if big_tech_months >= 72: # 6+ years
+        candidate_skills = {s.name.lower() for s in candidate.skills}
+        # Check actual skill synonyms or exact matches
+        from config import SKILL_SYNONYMS
+        missing_count = 0
+        for req in JD_REQUIRED_SKILLS:
+            req_lower = req.lower()
+            synonyms = [s.lower() for s in SKILL_SYNONYMS.get(req, [])]
+            if req_lower not in candidate_skills and not any(syn in candidate_skills for syn in synonyms):
+                missing_count += 1
+                
+        if missing_count > 3:
+            score.penalties.append("implausible_big_tech_profile")
+            score.penalty_total += score.base_score * 0.40 # 0.6x multiplier
     return score
 
 # ─────────────────────────────────────────────────────────────────────────────

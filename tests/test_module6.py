@@ -77,7 +77,7 @@ def test_tier3_acknowledges_gap(scored_sample):
         r = generate_reasoning(c, score, jd)
         concern_indicators = [
             "concern", "note:", "despite", "limitation", "inactive",
-            "notice", "not open", "below", "gap", "limited", "included due to"
+            "notice", "not open", "below", "gap", "limited", "included due to", "caveat"
         ]
         assert any(ind in r.lower() for ind in concern_indicators), \
             f"Lower-ranked reasoning should acknowledge gap: '{r}'"

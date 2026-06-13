@@ -71,6 +71,9 @@ def test_keyword_stuffer_severe_penalty():
     candidates = load_candidates("data/raw/candidates.jsonl")
     jd = get_jd()
     c = candidates[0]
+    # Rename companies to avoid triggering fictional company honeypot
+    for ch in c.career_history:
+        ch.company = "SafeCorp"
     c.current_title = "Marketing Manager"
     c.skills = [
         SkillEntry(name=r, proficiency="advanced",

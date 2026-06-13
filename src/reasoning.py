@@ -72,16 +72,15 @@ def generate_reasoning(
         s1 = f"Currently a {title} at {recent_company} deploying {skills_str}, backed by {years:.1f} years of experience."
 
     # Sentence 2: Nuance and Concerns (Tiered by rank to ensure honest tone)
-    if rank <= 15:
-        s2 = "Strong overall match for the JD's core retrieval requirements."
-    elif rank <= 40:
+    s2 = ""
+    if rank > 15 and rank <= 40:
         s2 = f"Minor caveat: {primary_gap}."
-    elif rank <= 70:
+    elif rank > 40 and rank <= 70:
         s2 = f"Honest concern: {primary_gap}."
-    else:
+    elif rank > 70:
         s2 = f"Significant limitation: {primary_gap}."
 
-    return f"{s1} {s2}"
+    return f"{s1} {s2}".strip()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
