@@ -11,14 +11,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download spaCy model (requires network — happens at BUILD time)
-RUN python -m spacy download en_core_web_sm
+# Download spaCy model via direct pip link to avoid 404 resolution errors
+RUN pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1.tar.gz
 
 # Pre-download BGE embedding model into HuggingFace cache (requires network — BUILD time)
 RUN python -c "\
 from sentence_transformers import SentenceTransformer; \
 SentenceTransformer('BAAI/bge-small-en-v1.5', device='cpu'); \
 print('BGE model cached.')"
+
+# Force HuggingFace to run in offline mode at runtime so it doesn't try to check for updates
+ENV HF_HUB_OFFLINE=1
 
 # Copy project code
 COPY src/ ./src/

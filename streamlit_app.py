@@ -199,6 +199,8 @@ with tab_leaderboard:
             col2.metric("Min Score", f"{df['score'].min():.4f}")
             col3.metric("Max Score", f"{df['score'].max():.4f}")
 
+            st.info("💡 **Tip:** Double-click or hover over any cell in the **Reasoning** column to read the full text, or expand the column width by dragging its edge.")
+
             st.dataframe(
                 df,
                 column_config={
@@ -312,7 +314,7 @@ The pipeline executes a deterministic two-stage ranking and validation framework
 ```mermaid
 graph TD
     A[Raw Candidates JSONL] --> B[Stage 1 Fast Filter]
-    B -->|Score Structured Fields| C[Top 5000 Candidates]
+    B -->|Score Structured Fields| C[Top 2000 Candidates]
     C --> D[Stage 2 Semantic Embeddings]
     D -->|BAAI/bge-small-en-v1.5| E[Stage 2 Scoring]
     E -->|Structured + Semantic weights| F[Edge Cases & Penalties]
