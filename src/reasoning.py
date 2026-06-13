@@ -43,8 +43,8 @@ def generate_reasoning(
     # Best assessed skill (highest scoring assessment on JD-relevant skills)
     best_assessment = _get_best_assessment(candidate, matched_required)
 
-    # Most recent non-consulting company
-    recent_company = _get_recent_product_company(candidate) or "Previous employer"
+    # Most recent company
+    recent_company = _get_recent_company(candidate) or "Previous employer"
 
     # Primary gap (what stops this candidate from being perfect)
     primary_gap = _get_primary_gap(candidate, score, matched_required, years)
@@ -55,49 +55,33 @@ def generate_reasoning(
     rank = score.rank
 
     # ─────────────────────────────────────────────────────────────────────────
-    # 6 Distinct Reasoning Bands
+    # Dynamic Clause Swapping for Natural Variation
     # Every string includes `{years:.1f}` and `{title}` to pass Stage 4 checks.
     # ─────────────────────────────────────────────────────────────────────────
     
-    if rank <= 15:
-        # Lead with a specific named project or system they shipped
-        s1 = f"Shipped {recent_company}'s production infrastructure as a {title} using {skills_str} over {years:.1f} years."
-        s2 = _get_engagement_or_assessment_sentence(sig, best_assessment)
-        return f"{s1} {s2}"
-
-    elif rank <= 30:
-        # Lead with years of experience + specific employer + specific skill combo
-        s1 = f"{years:.1f} years building production systems at {recent_company} as a {title}, including {skills_str}."
-        if sig.notice_period_days > 30:
-            s2 = f"Minor caveat: {sig.notice_period_days}-day notice period honestly acknowledged."
-        else:
-            s2 = f"Strong engagement signal ({sig.recruiter_response_rate:.2f} response rate)."
-        return f"{s1} {s2}"
-
-    elif rank <= 50:
-        # Lead with the verified skill assessment score as the anchor
-        ass_str = f"{best_assessment[1]:.0f}/100 on {best_assessment[0]}" if best_assessment else "strong internal test scores"
-        s1 = f"Independently verified: {ass_str} assessment, backed by {github_text}."
-        s2 = f"Validates their {years:.1f} years of experience at {recent_company} working as a {title} with {skills_str}."
-        return f"{s1} {s2}"
-
-    elif rank <= 70:
-        # Lead with the behavioral signal as the anchor
-        s1 = f"High recruiter responsiveness ({sig.recruiter_response_rate:.2f} response rate) combined with active job seeking signals."
-        s2 = f"Brings {years:.1f} years of solid experience as a {title} at {recent_company}, deploying {skills_str}."
-        return f"{s1} {s2}"
-
-    elif rank <= 85:
-        # Lead with the honest concern first
-        s1 = f"{primary_gap.capitalize()} is a meaningful gap, however they show promise."
-        s2 = f"Included based on {years:.1f} years of experience as a {title} utilizing {skills_str} at {recent_company}."
-        return f"{s1} {s2}"
-
+    # Sentence 1: Lead with the candidate's strongest attribute
+    if best_assessment and best_assessment[1] >= 85:
+        s1 = f"Verified {best_assessment[1]:.0f}/100 on {best_assessment[0]} assessment. Brings {years:.1f} years at {recent_company} working as a {title} with {skills_str}."
+    elif sig.github_activity_score >= 70:
+        s1 = f"Strong open-source coder ({sig.github_activity_score:.0f}/100 GitHub). {years:.1f} years at {recent_company} working as a {title}; skilled in {skills_str}."
+    elif years >= 7.0:
+        s1 = f"{years:.1f} years at {recent_company} working as a {title}; highly experienced with {skills_str}."
+    elif sig.recruiter_response_rate >= 0.8:
+        s1 = f"Highly responsive candidate ({sig.recruiter_response_rate:.2f} rate). {years:.1f} years at {recent_company} working as a {title} utilizing {skills_str}."
     else:
-        # Lead with the concern as the dominant note
-        s1 = f"Significant limitation noted: {primary_gap}."
-        s2 = f"Still considered due to {years:.1f} years as a {title} with baseline exposure to {skills_str}."
-        return f"{s1} {s2}"
+        s1 = f"Currently a {title} at {recent_company} deploying {skills_str}, backed by {years:.1f} years of experience."
+
+    # Sentence 2: Nuance and Concerns (Tiered by rank to ensure honest tone)
+    if rank <= 15:
+        s2 = "Strong overall match for the JD's core retrieval requirements."
+    elif rank <= 40:
+        s2 = f"Minor caveat: {primary_gap}."
+    elif rank <= 70:
+        s2 = f"Honest concern: {primary_gap}."
+    else:
+        s2 = f"Significant limitation: {primary_gap}."
+
+    return f"{s1} {s2}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -134,16 +118,15 @@ def _get_best_assessment(
     return best
 
 
-def _get_recent_product_company(candidate: CandidateProfile) -> Optional[str]:
+def _get_recent_company(candidate: CandidateProfile) -> Optional[str]:
+    if not candidate.career_history:
+        return None
     sorted_history = sorted(
         candidate.career_history,
         key=lambda c: c.start_date,
         reverse=True,
     )
-    for career_item in sorted_history:
-        if career_item.company.lower().strip() not in CONSULTING_FIRMS:
-            return career_item.company
-    return None
+    return sorted_history[0].company
 
 
 def _get_primary_gap(

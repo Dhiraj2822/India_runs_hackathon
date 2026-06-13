@@ -160,13 +160,42 @@ def _detect_honeypot(candidate: CandidateProfile) -> CandidateProfile:
 # PENALTY EDGE CASE FUNCTIONS
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _has_production_signals(candidate: CandidateProfile) -> bool:
+    """
+    Check if candidate has actual production deployment / IC signals.
+    Exempts them from consulting firm penalties.
+    """
+    # 1. Verified Assessment Signal
+    for skill_name, ass_score in candidate.redrob_signals.skill_assessment_scores.items():
+        is_relevant = any(req in skill_name or skill_name in req for req in JD_REQUIRED_SKILLS)
+        if is_relevant and ass_score >= 70:
+            return True
+
+    # 2. Strong IC Title + Retrieval Skills
+    title_lower = candidate.current_title.lower()
+    if any(w in title_lower for w in ["engineer", "applied", "senior"]):
+        return True
+
+    # 3. Production Deployment Keywords in History
+    production_keywords = {"production", "deployed", "shipped", "real users", "scale", "serving"}
+    for c in candidate.career_history:
+        desc = c.description.lower()
+        if any(kw in desc for kw in production_keywords):
+            return True
+            
+    return False
+
 def _ec_consulting_only(candidate, score, jd):
     """
     JD explicitly states no pure consulting background.
-    Only applies if ALL career history is at consulting firms.
+    Only applies if ALL career history is at consulting firms AND no production signals exist.
     """
     if not candidate.career_history:
         return score
+    
+    if _has_production_signals(candidate):
+        return score
+
     all_companies = {c.company.lower().strip() for c in candidate.career_history}
     if all_companies and all_companies.issubset(CONSULTING_FIRMS):
         score.penalties.append("consulting_only_career")
@@ -302,6 +331,10 @@ def _ec_primary_wrong_domain(candidate, score, jd):
 def _ec_consulting_only_career(candidate, score, jd):
     if not candidate.career_history:
         return score
+        
+    if _has_production_signals(candidate):
+        return score
+
     all_companies = {c.company.lower().strip() for c in candidate.career_history}
     is_all_consulting = all_companies and all_companies.issubset(CONSULTING_FIRMS)
     has_product = not is_all_consulting # simplified product company check
