@@ -6,7 +6,7 @@ If a value needs changing, change it here only.
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 CANDIDATES_JSONL = "data/raw/candidates.jsonl"
-OUTPUT_CSV        = "submission.csv"
+OUTPUT_CSV        = "6a159a16188af89836505d14.csv"
 LOGS_PATH         = "logs/errors.log"
 
 # ─── Model ────────────────────────────────────────────────────────────────────
@@ -56,17 +56,16 @@ EDUCATION_TIER_SCORES = {
 
 # ─── JD: Required and preferred skills (from actual job_description.docx) ─────
 JD_REQUIRED_SKILLS = [
-    "embeddings", "retrieval", "ranking", "sentence-transformers",
-    "vector database", "pinecone", "weaviate", "qdrant", "milvus",
-    "faiss", "elasticsearch", "python", "evaluation", "ndcg", "mrr",
-    "hybrid search", "dense retrieval", "semantic search",
+    "embeddings", "vector database", "semantic search", "hybrid retrieval",
+    "sentence-transformers", "bge", "e5", "openai embeddings", "pinecone",
+    "weaviate", "qdrant", "milvus", "faiss", "opensearch", "elasticsearch",
+    "ranking", "ndcg", "mrr", "map", "learning to rank", "rag", "retrieval",
+    "nlp", "information retrieval", "recommendation system",
 ]
 
 JD_PREFERRED_SKILLS = [
-    "llm fine-tuning", "lora", "qlora", "peft", "learning to rank",
-    "xgboost", "lightgbm", "open source", "distributed systems",
-    "inference optimization", "a/b testing", "bm25", "reranking",
-    "opensearch", "recommendation systems",
+    "lora", "qlora", "peft", "fine-tuning", "xgboost", "lambdarank",
+    "distributed systems", "inference optimization", "hr tech", "recruiting tech",
 ]
 
 # ─── JD: Experience range ─────────────────────────────────────────────────────
@@ -104,15 +103,8 @@ HONEYPOT_TITLES = {
 
 # ─── Titles that indicate strong AI/ML relevance ─────────────────────────────
 AI_ML_TITLES = {
-    "machine learning engineer", "ml engineer", "ai engineer",
-    "applied scientist", "research engineer", "nlp engineer",
-    "data scientist", "recommendation systems engineer",
-    "search engineer", "ranking engineer", "information retrieval",
-    "applied ml", "deep learning engineer", "retrieval engineer",
-    "backend engineer",   # can be relevant with right skills
-    "software engineer",  # can be relevant with right skills
-    "data engineer",      # can be relevant
-    "platform engineer",  # can be relevant
+    "ai engineer", "ml engineer", "applied scientist", "search engineer",
+    "nlp engineer", "ranking engineer", "retrieval engineer", "research engineer",
 }
 
 # ─── Skill synonym groups (for matching variants of the same skill) ───────────

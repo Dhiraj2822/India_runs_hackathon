@@ -57,6 +57,12 @@ def apply_edge_cases(
     score = _ec_keyword_stuffer(candidate, score, jd)
     score = _ec_long_notice_period(candidate, score, jd)
     score = _ec_primary_wrong_domain(candidate, score, jd)
+    score = _ec_consulting_only_career(candidate, score, jd)
+    score = _ec_pure_research_no_production(candidate, score, jd)
+    score = _ec_llm_wrapper_only(candidate, score, jd)
+    score = _ec_non_coder_architect(candidate, score, jd)
+    score = _ec_cv_speech_robotics_only(candidate, score, jd)
+    score = _ec_title_chaser(candidate, score, jd)
 
     # ── Phase 3: Bonus edge cases ──────────────────────────────────────────────
     score = _ec_preferred_location(candidate, score, jd)
@@ -288,6 +294,87 @@ def _ec_primary_wrong_domain(candidate, score, jd):
         score.penalty_total += 0.08
     return score
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PENALTY EDGE CASE FUNCTIONS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _ec_consulting_only_career(candidate, score, jd):
+    if not candidate.career_history:
+        return score
+    all_companies = {c.company.lower().strip() for c in candidate.career_history}
+    is_all_consulting = all_companies and all_companies.issubset(CONSULTING_FIRMS)
+    has_product = not is_all_consulting # simplified product company check
+    if is_all_consulting and not has_product:
+        score.penalties.append("consulting_only_career_hard")
+        score.penalty_total += score.base_score * 0.95
+    return score
+
+
+def _ec_pure_research_no_production(candidate, score, jd):
+    if not candidate.career_history:
+        return score
+    academic_keywords = {"university", "research lab", "institute", "postdoc", "phd", "academic"}
+    production_signals = ["production", "deployed", "shipped", "real users", "scale", "serving"]
+    all_descriptions = " ".join(c.description.lower() for c in candidate.career_history)
+    all_academic = all(any(kw in c.company.lower() or kw in c.title.lower() for kw in academic_keywords) for c in candidate.career_history)
+    has_prod = any(sig in all_descriptions for sig in production_signals)
+    if all_academic and not has_prod:
+        score.penalties.append("pure_research_no_production")
+        score.penalty_total += score.base_score * 0.90
+    return score
+
+
+def _ec_llm_wrapper_only(candidate, score, jd):
+    wrapper_keywords = {"langchain", "llamaindex", "openai api"}
+    has_wrapper = any(s.name.lower() in wrapper_keywords for s in candidate.skills)
+    max_wrapper_duration = max([s.duration_months for s in candidate.skills if s.name.lower() in wrapper_keywords], default=0)
+    has_pre_llm = any(s.duration_months > 12 and s.name.lower() not in wrapper_keywords for s in candidate.skills if s.proficiency in ["advanced", "expert"])
+    if has_wrapper and max_wrapper_duration < 12 and not has_pre_llm:
+        score.penalties.append("llm_wrapper_only_under_12m")
+        score.penalty_total += score.base_score * 0.85
+    return score
+
+
+def _ec_non_coder_architect(candidate, score, jd):
+    title = candidate.current_title.lower()
+    senior_titles = {"vp", "director", "principal architect"}
+    is_senior = any(st in title for st in senior_titles)
+    github_score = candidate.redrob_signals.github_activity_score
+    if is_senior and github_score <= 0:
+        score.penalties.append("non_coder_architect")
+        score.penalty_total += score.base_score * 0.80
+    return score
+
+
+def _ec_cv_speech_robotics_only(candidate, score, jd):
+    wrong_domain_skills = {"computer vision", "object detection", "image segmentation", "speech recognition", "tts", "robotics", "ros"}
+    ir_skills = {"embeddings", "retrieval", "ranking", "vector database", "faiss", "pinecone", "weaviate", "qdrant", "semantic search", "elasticsearch", "nlp"}
+    candidate_skills = {s.name for s in candidate.skills}
+    wrong_matches = candidate_skills.intersection(wrong_domain_skills)
+    ir_matches = candidate_skills.intersection(ir_skills)
+    if len(wrong_matches) > 0 and len(ir_matches) == 0:
+        score.penalties.append("cv_speech_robotics_only")
+        score.penalty_total += score.base_score * 0.85
+    return score
+
+
+def _ec_title_chaser(candidate, score, jd):
+    if len(candidate.career_history) >= 3:
+        # Sort by start date to find span
+        sorted_history = sorted(candidate.career_history, key=lambda c: c.start_date)
+        try:
+            from datetime import date
+            start = date.fromisoformat(sorted_history[0].start_date)
+            end = date.fromisoformat(sorted_history[-1].end_date) if sorted_history[-1].end_date else date.today()
+            span_years = (end - start).days / 365.0
+            max_tenure = max(c.duration_months for c in candidate.career_history)
+            if span_years < 4.5 and max_tenure <= 18:
+                score.penalties.append("title_chaser_pattern")
+                score.penalty_total += score.base_score * 0.30  # Soft penalty (multiplier 0.7x)
+        except:
+            pass
+    return score
 
 # ─────────────────────────────────────────────────────────────────────────────
 # BONUS EDGE CASE FUNCTIONS

@@ -193,49 +193,40 @@ def _github_signal_text(github_score: float) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TIER-SPECIFIC BUILDERS
+# DYNAMIC REASONING BUILDERS
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _build_tier1_reasoning(
     title, years, location, matched_required,
     best_assessment, recent_company, github_text, sig,
 ) -> str:
-    """
-    Rank 1-10: Confident, specific, highlights best signals.
-    Sentence 1: Role + experience + company + top skills.
-    Sentence 2: Assessment or GitHub + engagement stats.
-    Example style: "Senior AI Engineer with 7 years building RAG systems at
-    product companies; strong recent engagement and Bangalore-based."
-    """
-    # Sentence 1
-    skills_str = ", ".join(matched_required[:3]) if matched_required else "adjacent ML background"
+    """Rank 1-10: Confident, specific, highlights best signals."""
     company_str = f" at {recent_company}" if recent_company else ""
-    location_str = f", based in {location}" if location else ""
-    s1 = (
-        f"{title} with {years:.1f}yr experience{company_str}{location_str}; "
-        f"direct match on {skills_str}."
-    )
-
-    # Sentence 2: pick most impressive signal
-    if best_assessment and best_assessment[1] >= 60:
-        skill_name, ass_score = best_assessment
-        s2 = (
-            f"Platform-assessed {skill_name} at {ass_score:.0f}/100; "
-            f"response rate {sig.recruiter_response_rate:.2f}; "
-            f"notice {sig.notice_period_days}d."
-        )
-    elif sig.github_activity_score >= 50:
-        s2 = (
-            f"{github_text.capitalize()}; "
-            f"response rate {sig.recruiter_response_rate:.2f}; "
-            f"notice {sig.notice_period_days}d."
-        )
+    skills_str = ", ".join(matched_required[:3]) if matched_required else "adjacent ML stack"
+    
+    # Specific JD connection
+    if "vector database" in matched_required or "elasticsearch" in matched_required or "pinecone" in matched_required:
+        jd_conn = "— exactly the retrieval stack this JD requires"
+    elif "sentence-transformers" in matched_required or "embeddings" in matched_required:
+        jd_conn = "— demonstrating the embedding expertise requested in the JD"
     else:
-        s2 = (
-            f"Response rate {sig.recruiter_response_rate:.2f}; "
-            f"notice {sig.notice_period_days}d; "
-            f"open to opportunities."
-        )
+        jd_conn = "— aligning with the JD's core ML requirements"
+
+    s1 = f"{years:.1f} years{company_str} working as a {title}; strong with {skills_str} {jd_conn}."
+
+    # Assessment or GitHub + minor concern if any
+    if best_assessment and best_assessment[1] >= 70:
+        s2 = f"Verified {best_assessment[0]} skills ({best_assessment[1]:.0f}/100)."
+    else:
+        s2 = f"{github_text.capitalize()}."
+
+    if sig.notice_period_days > 30:
+        s2 += f" Minor concern: {sig.notice_period_days}-day notice period."
+    elif not sig.open_to_work_flag:
+        s2 += f" Minor concern: not actively looking (open_to_work=False)."
+    else:
+        s2 += f" Excellent engagement (response rate: {sig.recruiter_response_rate:.2f})."
+
     return f"{s1} {s2}"
 
 
@@ -243,34 +234,23 @@ def _build_tier2_reasoning(
     title, years, matched_required,
     best_assessment, primary_gap, sig, rank
 ) -> str:
-    """
-    Ranks 11-50: Positive with acknowledged nuance.
-    Sentence 1: Core strength.
-    Sentence 2: Engagement signal + honest gap note if significant.
-    """
-    phrase_idx = rank % 3
-    skills_str = (
-        ", ".join(matched_required[:2])
-        if matched_required
-        else "adjacent technical background"
-    )
+    """Ranks 11-50: Positive with acknowledged nuance, varied by modulo."""
+    idx = rank % 4
+    skills_str = ", ".join(matched_required[:2]) if matched_required else "transferable tech"
     
-    if phrase_idx == 0:
-        s1 = f"{title} with {years:.1f}yr experience; matches on {skills_str}."
-    elif phrase_idx == 1:
-        s1 = f"Strong background in {skills_str} ({title}, {years:.1f}yr experience)."
+    if idx == 0:
+        s1 = f"Solid {title} profile ({years:.1f}yr). Shows production experience with {skills_str}, satisfying the JD's applied ML criteria."
+    elif idx == 1:
+        s1 = f"Brings {years:.1f} years of experience. Specifically matches the JD's need for {skills_str}."
+    elif idx == 2:
+        s1 = f"Competent {title} with {skills_str} background, validating the JD's retrieval focus."
     else:
-        s1 = f"Experienced {title} ({years:.1f}yr); aligns well with {skills_str}."
+        s1 = f"Relevant {years:.1f}yr tenure involving {skills_str} (JD required stack)."
 
-    engagement = f"response rate {sig.recruiter_response_rate:.2f}"
-    if best_assessment and best_assessment[1] >= 50:
-        engagement += f"; {best_assessment[0]} assessed at {best_assessment[1]:.0f}/100"
-
-    # Only surface gap if it's meaningful (not just "strong fit with minor gaps")
-    if "strong overall fit" in primary_gap or "minor signal" in primary_gap:
-        s2 = f"{engagement.capitalize()}; notice {sig.notice_period_days}d."
+    if "minor" not in primary_gap and "strong" not in primary_gap:
+        s2 = f"Honest concern: {primary_gap}."
     else:
-        s2 = f"{engagement.capitalize()}; note: {primary_gap}."
+        s2 = f"Good engagement signal ({sig.recruiter_response_rate:.2f} response rate) but {sig.notice_period_days}d notice."
 
     return f"{s1} {s2}"
 
@@ -278,36 +258,16 @@ def _build_tier2_reasoning(
 def _build_tier3_reasoning(
     title, years, matched_required, primary_gap, sig, rank
 ) -> str:
-    """
-    Ranks 51-100: Honest about limitations, explains inclusion reason.
-    Passes Stage 4 check 3 (honest concerns) and check 6 (rank-consistent tone).
-    """
-    phrase_idx = rank % 3
-    if matched_required:
-        skills = ", ".join(matched_required[:2])
-        if phrase_idx == 0:
-            inclusion = f"some alignment on {skills}"
-        elif phrase_idx == 1:
-            inclusion = f"demonstrates baseline knowledge in {skills}"
-        else:
-            inclusion = f"shows potential with {skills}"
+    """Ranks 51-100: Honest about limitations, explains inclusion reason."""
+    idx = rank % 3
+    skills = ", ".join(matched_required[:2]) if matched_required else "general engineering"
+    
+    if idx == 0:
+        s1 = f"Included due to baseline exposure to {skills}."
+    elif idx == 1:
+        s1 = f"Partial JD alignment through {skills} experience."
     else:
-        if phrase_idx == 0:
-            inclusion = "adjacent technical profile"
-        elif phrase_idx == 1:
-            inclusion = "transferable technical skills"
-        else:
-            inclusion = "has an adjacent ML background"
+        s1 = f"Shows adjacent potential in {skills} despite not being a perfect fit."
 
-    if phrase_idx == 0:
-        s1 = f"{title} with {years:.1f}yr experience; included due to {inclusion}."
-    elif phrase_idx == 1:
-        s1 = f"Selected for {inclusion} ({title}, {years:.1f}yr experience)."
-    else:
-        s1 = f"{title} ({years:.1f}yr experience) — included as they {inclusion.replace('has ', 'have ')}."
-
-    s2 = (
-        f"Key concern: {primary_gap}; "
-        f"response rate {sig.recruiter_response_rate:.2f}."
-    )
+    s2 = f"Major gap: {primary_gap}. Response rate is {sig.recruiter_response_rate:.2f}."
     return f"{s1} {s2}"

@@ -257,6 +257,10 @@ def _s2_skill_quality(candidate: CandidateProfile, jd: JobDescription) -> float:
             # because it's an objective third-party measure
             assessment_component = skill.assessment_score / 100.0
             quality = (assessment_component * 0.6) + (base * 0.3) + (duration_bonus * 0.1)
+            if skill.assessment_score > 70:
+                quality += 0.10
+            elif skill.assessment_score < 40:
+                quality -= 0.05
         else:
             quality = base + duration_bonus + endorsement_bonus
 
@@ -391,28 +395,42 @@ def _s2_behavioral(candidate: CandidateProfile) -> float:
     # Response rate: 30% weight
     response_score = sig.recruiter_response_rate  # already 0.0-1.0
 
-    # Profile completeness: 15%
-    completeness = sig.profile_completeness_score / 100.0
-
-    # GitHub activity: 25%
+    # GitHub activity: 20%
     if sig.github_activity_score < 0:
-        github = 0.35  # neutral if no GitHub (don't penalise absence)
+        github = 0.50  # neutral if no GitHub
     else:
         github = sig.github_activity_score / 100.0
 
-    # Interview completion: 15%
+    # Interview completion: 8%
     interview = sig.interview_completion_rate
 
-    # Market demand: 15%
-    demand_raw = (sig.saved_by_recruiters_30d * 10 + sig.search_appearance_30d) / 200.0
-    demand = min(1.0, demand_raw)
+    # Offer acceptance rate: 5%
+    if sig.offer_acceptance_rate < 0:
+        offer = 0.50  # neutral
+    else:
+        offer = sig.offer_acceptance_rate
+
+    # Applications submitted: 4%
+    apps = min(1.0, sig.applications_submitted_30d / 5.0)
+
+    # Profile completeness: 6%
+    completeness = sig.profile_completeness_score / 100.0
+
+    # Saved by recruiters: 7%
+    saved = min(1.0, sig.saved_by_recruiters_30d / 5.0)
+    
+    # Remaining 20% distributed to original search appearance / baseline
+    demand = min(1.0, sig.search_appearance_30d / 100.0)
 
     behavioral = (
         response_score * 0.30 +
-        completeness   * 0.15 +
-        github         * 0.25 +
-        interview      * 0.15 +
-        demand         * 0.15
+        github         * 0.20 +
+        interview      * 0.08 +
+        offer          * 0.05 +
+        apps           * 0.04 +
+        completeness   * 0.06 +
+        saved          * 0.07 +
+        demand         * 0.20
     )
     return max(0.0, min(1.0, behavioral))
 

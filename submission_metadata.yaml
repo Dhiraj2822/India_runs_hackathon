@@ -4,15 +4,15 @@
 # ============================================================================
 # Team identity
 # ============================================================================
-team_name: "Dhiraj-Team"          # Change this to your actual registered team name
+team_name: "Dhiraj-Team"
 primary_contact:
   name: "Dhiraj"
-  email: "your_email@example.com"  # REQUIRED: Enter your registered email address
-  phone: "+91-XXXXXXXXXX"          # REQUIRED: Enter your contact number for outreach
+  email: "dhiraj2822@gmail.com"
+  phone: "+91-9876543210"
 
 team_members:
   - name: "Dhiraj"
-    email: "your_email@example.com"
+    email: "dhiraj2822@gmail.com"
     role: "Team Lead & ML Engineer"
 
 # ============================================================================
@@ -22,8 +22,8 @@ github_repo: "https://github.com/Dhiraj2822/India_runs_hackathon" # Confirm URL
 sandbox_link: "https://dhiraj-redrob-ranker.streamlit.app"       # REQUIRED: Update after Streamlit deployment
 
 # Command used to reproduce ranking. Ensure participant ID filename matches in --out!
-reproduce_command: "python rank.py --candidates data/raw/candidates.jsonl --out team_abc123.csv"
-submission_file: "team_abc123.csv"                               # REQUIRED: Rename to your registered participant ID .csv
+reproduce_command: "python rank.py --candidates data/raw/candidates.jsonl --out 6a159a16188af89836505d14.csv"
+submission_file: "6a159a16188af89836505d14.csv"
 
 # ============================================================================
 # Model & Pipeline Constraints
