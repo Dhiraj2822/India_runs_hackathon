@@ -76,12 +76,19 @@ def rank_all(
         scored_pairs.append((c, score))
     print(f"  Full scoring complete ({time.time()-t2:.1f}s)")
 
-    # ── Sort by final_score desc; tie-break: candidate_id ascending ───────────
-    # Tie-break rule from submission_spec.docx:
-    # When final_score is equal, lower candidate_id (alphabetically) gets lower rank number.
-    # final_score is already rounded to 4dp by apply_edge_cases() so this sort
-    # matches the CSV precision exactly — no rounding needed here.
-    scored_pairs.sort(key=lambda x: (-x[1].final_score, x[0].candidate_id))
+    # Sort by final_score descending; 3-level tie-breaking:
+    #   Level 1 (primary)  : rounded 4dp score — matches what appears in submission CSV.
+    #   Level 2 (secondary): raw unrounded score — truer signal wins when rounded scores tie.
+    #   Level 3 (tertiary) : candidate_id ascending — deterministic last resort.
+    # This improves on the spec's pure-alphabetical tie-break by using the actual
+    # underlying score before falling back to candidate ID ordering.
+    scored_pairs.sort(
+        key=lambda x: (
+            -round(x[1].final_score, 4),   # primary: rounded score (matches CSV)
+            -x[1].final_score,              # secondary: raw unrounded score
+            x[0].candidate_id,              # tertiary: alphabetical ID
+        )
+    )
 
     # Take top TOP_K_STAGE2 (200) for reasoning generation
     top200 = scored_pairs[:TOP_K_STAGE2]

@@ -202,14 +202,20 @@ with tab_leaderboard:
             st.dataframe(
                 df,
                 column_config={
-                    "candidate_id": "Candidate ID",
-                    "rank": "Rank",
-                    "score": st.column_config.NumberColumn(
-                        "Final Score", format="%.4f"
+                    "candidate_id": st.column_config.TextColumn(
+                        "Candidate ID", width="medium"
                     ),
-                    "reasoning": "Reasoning & Qualifications",
+                    "rank": st.column_config.NumberColumn(
+                        "Rank", width="small"
+                    ),
+                    "score": st.column_config.NumberColumn(
+                        "Final Score", format="%.4f", width="small"
+                    ),
+                    "reasoning": st.column_config.TextColumn(
+                        "Reasoning & Qualifications", width="large"
+                    ),
                 },
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
         except Exception as e:
@@ -257,7 +263,7 @@ with tab_sandbox:
                         # 3. Run pipeline
                         results = rank_all(candidates, jd, model)
 
-                    st.balloons()
+
                     st.markdown("### Ranked Sample Results")
 
                     for rank_idx, s in enumerate(results, start=1):
@@ -317,7 +323,7 @@ graph TD
 #### Key Design Safeguards
 1. **Zero Hallucination Reasoning**: The reasoning module uses pure profile facts (actual years of experience, actual titles, actual skills). If a candidate is missing a required skill, it detects it and generates a balanced overview without inventing facts.
 2. **Honeypot Disqualification**: Any candidate matching a honeypot template (e.g. Graphic Designer with keyword stuffing) gets flagged and scored 0.0. If more than 10% of the top 100 are honeypots, the validation pipeline triggers an error to prevent submission disqualification.
-3. **Deterministic Tie-Breaking**: Ranks are sorted by `(-final_score, candidate_id)`. If two candidates have an identical rounded score (e.g. `0.7521`), the candidate with the alphabetically lower ID receives the higher rank.
+3. **Deterministic Tie-Breaking**: Ranks are sorted by `(-round(score,4), -raw_score, candidate_id)`. If two candidates share the same rounded 4dp score, the candidate with the higher raw unrounded score wins. If scores are truly identical, the alphabetically lower ID receives the higher rank.
 """
     )
 

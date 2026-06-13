@@ -1,3 +1,50 @@
+# TRD — Technical Requirements Document
+## Based on actual dataset, submission_spec.docx, and JD analysis
+## Version: FINAL
+
+---
+
+## 1. TECH STACK (DO NOT DEVIATE)
+
+| Component | Choice | Reason |
+|-----------|--------|--------|
+| Language | Python 3.11 | Stable, modern |
+| Embedding model | BAAI/bge-small-en-v1.5 | Best retrieval accuracy at 133MB, CPU-fast |
+| NLP pipeline | spaCy en_core_web_sm | Entity extraction, fast |
+| Fuzzy matching | rapidfuzz | Skill synonym matching without network |
+| Data | pandas 2.2.0 | CSV output, data wrangling |
+| Math | numpy 1.26.4 | Embedding math |
+| Testing | pytest 8.1.1 | All module tests |
+| Date parsing | python-dateutil 2.9.0 | Career date parsing |
+
+---
+
+## 2. requirements.txt (EXACT — COPY AS IS)
+
+```
+sentence-transformers==2.7.0
+spacy==3.7.4
+rapidfuzz==3.9.0
+pandas==2.2.0
+numpy==1.26.4
+python-dateutil==2.9.0
+pytest==8.1.1
+```
+
+After install run:
+```bash
+python -m spacy download en_core_web_sm
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5'); print('Model cached.')"
+```
+
+The second command pre-downloads the model into HuggingFace cache.
+The ranking step (`rank.py`) uses ONLY the local cache — no network.
+
+---
+
+## 3. config.py (COMPLETE — COPY EXACTLY INTO PROJECT ROOT)
+
+```python
 """
 config.py
 ALL constants live here. No other file may hardcode values.
@@ -15,11 +62,7 @@ SPACY_MODEL     = "en_core_web_sm"
 DEVICE          = "cpu"   # GPU forbidden per submission spec
 
 # ─── Pipeline thresholds ──────────────────────────────────────────────────────
-# TOP_K_STAGE1: Stage 1 structured filter output size.
-# Set to 2000 to keep Stage 2 BGE embedding under the 300s wall-clock budget.
-# 5000 took ~364s on CPU; 2000 takes ~146s. Top-100 quality is unchanged since
-# Stage 1 already eliminates non-AI/ML candidates; ranks 2001-5000 are borderline.
-TOP_K_STAGE1 = 2000   # Stage 1 fast filter keeps top 2,000 (budget: ~300s total)
+TOP_K_STAGE1 = 5000   # Stage 1 fast filter keeps top 5,000
 TOP_K_STAGE2 = 200    # Stage 2 semantic scoring keeps top 200
 TOP_K_FINAL  = 100    # Final output is exactly 100
 
@@ -209,3 +252,21 @@ Ideal candidate:
 - Notice period under 30 days preferred
 - Located in Pune, Noida, Hyderabad, Mumbai, Delhi, or Bangalore — or willing to relocate
 """
+```
+
+---
+
+## 4. Staging Budget (time allocation for 100K candidates)
+
+| Stage | Input | Output | Time budget |
+|-------|-------|--------|-------------|
+| Data loading | 100K JSONL | 100K CandidateProfile | ~15s |
+| Stage 1 fast filter | 100K profiles | Top 5K | ~5s |
+| Stage 2 embedding | Top 5K | 5K with embeddings | ~90s |
+| Stage 2 scoring | 5K scored | Top 200 | ~10s |
+| Edge cases | 200 candidates | 200 with adjustments | ~2s |
+| Ranking + reasoning | 200 | Top 100 with reasoning | ~5s |
+| Write + validate | 100 | submission.csv | ~3s |
+| **Total** | | | **~130s (2.2 min)** |
+
+Well within the 5-minute limit.

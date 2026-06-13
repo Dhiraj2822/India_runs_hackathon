@@ -31,7 +31,7 @@ submission_file: "team_abc123.csv"                               # REQUIRED: Ren
 embedding_model: "BAAI/bge-small-en-v1.5"
 has_network_during_ranking: false   # Must be false — ranking is fully local
 uses_gpu_for_inference: false       # Must be false — runs on CPU only
-estimated_runtime_seconds: 430      # Takes ~7 minutes for full 100K dataset
+estimated_runtime_seconds: 170      # Stage 1: 2000 candidates retained; Stage 2 embedding ~146s total
 peak_memory_gb: 4.2                 # Runs comfortably within 16GB limit
 key_libraries:
   - "pandas"
