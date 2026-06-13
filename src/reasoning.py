@@ -65,11 +65,11 @@ def generate_reasoning(
     elif score.rank <= 50:
         return _build_tier2_reasoning(
             title, years, matched_required, best_assessment,
-            primary_gap, sig,
+            primary_gap, sig, score.rank
         )
     else:
         return _build_tier3_reasoning(
-            title, years, matched_required, primary_gap, sig,
+            title, years, matched_required, primary_gap, sig, score.rank
         )
 
 
@@ -241,19 +241,26 @@ def _build_tier1_reasoning(
 
 def _build_tier2_reasoning(
     title, years, matched_required,
-    best_assessment, primary_gap, sig,
+    best_assessment, primary_gap, sig, rank
 ) -> str:
     """
     Ranks 11-50: Positive with acknowledged nuance.
     Sentence 1: Core strength.
     Sentence 2: Engagement signal + honest gap note if significant.
     """
+    phrase_idx = rank % 3
     skills_str = (
         ", ".join(matched_required[:2])
         if matched_required
         else "adjacent technical background"
     )
-    s1 = f"{title} with {years:.1f}yr experience; matches on {skills_str}."
+    
+    if phrase_idx == 0:
+        s1 = f"{title} with {years:.1f}yr experience; matches on {skills_str}."
+    elif phrase_idx == 1:
+        s1 = f"Strong background in {skills_str} ({title}, {years:.1f}yr experience)."
+    else:
+        s1 = f"Experienced {title} ({years:.1f}yr); aligns well with {skills_str}."
 
     engagement = f"response rate {sig.recruiter_response_rate:.2f}"
     if best_assessment and best_assessment[1] >= 50:
@@ -269,20 +276,36 @@ def _build_tier2_reasoning(
 
 
 def _build_tier3_reasoning(
-    title, years, matched_required, primary_gap, sig,
+    title, years, matched_required, primary_gap, sig, rank
 ) -> str:
     """
     Ranks 51-100: Honest about limitations, explains inclusion reason.
     Passes Stage 4 check 3 (honest concerns) and check 6 (rank-consistent tone).
     """
+    phrase_idx = rank % 3
     if matched_required:
-        inclusion_reason = f"some alignment on {', '.join(matched_required[:2])}"
+        skills = ", ".join(matched_required[:2])
+        if phrase_idx == 0:
+            inclusion = f"some alignment on {skills}"
+        elif phrase_idx == 1:
+            inclusion = f"demonstrates baseline knowledge in {skills}"
+        else:
+            inclusion = f"shows potential with {skills}"
     else:
-        inclusion_reason = "adjacent technical profile"
+        if phrase_idx == 0:
+            inclusion = "adjacent technical profile"
+        elif phrase_idx == 1:
+            inclusion = "transferable technical skills"
+        else:
+            inclusion = "has an adjacent ML background"
 
-    s1 = (
-        f"{title} with {years:.1f}yr experience; included due to {inclusion_reason}."
-    )
+    if phrase_idx == 0:
+        s1 = f"{title} with {years:.1f}yr experience; included due to {inclusion}."
+    elif phrase_idx == 1:
+        s1 = f"Selected for {inclusion} ({title}, {years:.1f}yr experience)."
+    else:
+        s1 = f"{title} ({years:.1f}yr experience) — included as they {inclusion.replace('has ', 'have ')}."
+
     s2 = (
         f"Key concern: {primary_gap}; "
         f"response rate {sig.recruiter_response_rate:.2f}."
