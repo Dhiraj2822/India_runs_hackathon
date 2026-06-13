@@ -38,7 +38,7 @@ python validate_submission.py submission.csv
 
 ## Interactive Streamlit Sandbox
 
-An interactive dashboard is available to inspect the pipeline's output, review candidates, and run the ranker dynamically on a 50-candidate sample (`data/raw/sample_candidates.json`):
+An interactive dashboard is available to inspect the pipeline's output, review candidates, and run the ranker dynamically. The Live Sandbox tab allows users to upload custom JSON/JSONL candidate datasets and run the full pipeline in real-time, exporting the results to CSV.
 
 ### Run Streamlit App Locally:
 ```bash
@@ -67,18 +67,25 @@ The system uses a highly optimized, two-stage ranking process:
 
 1. **Stage 1: Fast Structured Filter**
    - Scores all 100,000 candidates in ~1.5 seconds based on structured attributes (AI/ML title relevance, exact skill keyword matching, notice period/recency availability, and domain alignment).
-   - Retains the top 5,000 candidates for advanced semantic scoring.
+   - Retains the top 2,000 candidates for advanced semantic scoring.
 
 2. **Stage 2: Full Scoring & Semantic Alignment**
-   - Generates semantic embeddings for the top 5,000 candidates using `BAAI/bge-small-en-v1.5` on the CPU.
-   - Combines semantic similarity with structured signals: skill quality metrics (endorsements + duration), career fit (product company experience), target experience range (5–9 years), behavioral signals, and education tiers.
+   - Generates semantic embeddings for the top 2,000 candidates using `BAAI/bge-small-en-v1.5` on the CPU.
+   - Combines semantic similarity with structured signals and **Behavioral Multipliers**:
+     - `recruiter_response_rate` (availability multiplier)
+     - `last_active_date` (recency decay penalty)
+     - `notice_period_days` (availability penalty)
+     - `open_to_work_flag` (heavy hard-filter multiplier)
+     - `github_activity_score` (technical validation boost)
 
 3. **Edge Cases & Guardrails**
-   - Applies 15 detectors including consulting company penalties, rapid title-switching (job-hopper) penalties, and **Honeypot Template Disqualification** (forces score to 0.0 for fake/keyword-stuffed profiles).
+   - Applies 15 advanced detectors including MAANG consulting penalties and "AI hype" experience mismatch penalties.
+   - **Honeypot Trap Disqualification**: Detects and zeros out scores for temporal inconsistencies (e.g., candidate start year predates company founding) and fabricated expert skills (e.g., 10+ skills with 0 years used).
    - Deterministic tie-breaking: Candidates with identical scores are sorted alphabetically by `candidate_id` ascending.
 
 4. **Hallucination-Free Reasoning**
-   - Generates non-templated explanation sentences.
+   - Generates highly dynamic, non-templated explanation sentences that read like human recruiter notes.
+   - Sentence structure rotates deterministically by rank to avoid repetitive phrasing.
    - Every sentence is built strictly from factual data retrieved directly from the candidate's profile (actual experience years, actual target skills, actual titles) preventing any AI-generated hallucinations.
 
 ---
@@ -103,5 +110,6 @@ The system uses a highly optimized, two-stage ranking process:
 ├── precompute.py            # Offline model caching script
 ├── rank.py                  # Main CLI execution script
 ├── streamlit_app.py         # Streamlit Sandbox interface
-└── validate_submission.py   # Hackathon CSV format validator
+├── validate_submission.py   # Hackathon CSV format validator
+└── submission_metadata.yaml # Stage 2 code portal metadata file
 ```
