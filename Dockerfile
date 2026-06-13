@@ -25,7 +25,7 @@ ENV HF_HUB_OFFLINE=1
 
 # Copy project code
 COPY src/ ./src/
-COPY config.py rank.py precompute.py ./
+COPY config.py rank.py precompute.py validate_submission.py validate_quality.py ./
 
 # data/raw/candidates.jsonl is NOT included — must be mounted at runtime
 # See docker run command below
