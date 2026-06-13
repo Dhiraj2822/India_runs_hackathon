@@ -231,14 +231,24 @@ with tab_leaderboard:
 with tab_sandbox:
     st.markdown("### Live Sandbox — Candidate Ranker")
     st.write(
-        "Run the complete NLP-powered ranking pipeline live on `sample_candidates.json` (50 candidate profiles)."
+        "Upload a JSON or JSONL file of candidate profiles to run the complete NLP-powered ranking pipeline live."
     )
 
-    sample_path = Path("data/raw/sample_candidates.json")
+    uploaded_file = st.file_uploader("Upload candidates file", type=["json", "jsonl"])
 
-    if not sample_path.exists():
-        st.error(f"Sample data file not found at: `{sample_path}`")
+    if uploaded_file is None:
+        st.info("Please upload a file to begin.")
+        # Provide a fallback button for the default sample if they don't have a file ready
+        if Path("data/raw/sample_candidates.json").exists():
+            st.write("Or run with the default sample (50 candidates):")
+            uploaded_file = open("data/raw/sample_candidates.json", "rb")
+            is_sample = True
+        else:
+            is_sample = False
     else:
+        is_sample = False
+
+    if uploaded_file is not None:
         if st.button("Run Live Ranking Pipeline", type="primary"):
             with st.spinner("Initializing models and embedding Job Description..."):
                 try:
@@ -248,8 +258,13 @@ with tab_sandbox:
                     jd = embed_jd(jd, model)
 
                     # 2. Load and parse candidates
-                    with open(sample_path, encoding="utf-8") as f:
-                        raw_data = json.load(f)
+                    raw_data = []
+                    if getattr(uploaded_file, "name", "").endswith(".jsonl"):
+                        for line in uploaded_file:
+                            if line.strip():
+                                raw_data.append(json.loads(line))
+                    else:
+                        raw_data = json.load(uploaded_file)
 
                     candidates = []
                     for raw in raw_data:
@@ -297,6 +312,21 @@ with tab_sandbox:
                             """,
                             unsafe_allow_html=True,
                         )
+                        
+                    # Prepare CSV download
+                    output_df = pd.DataFrame([
+                        {"candidate_id": s.candidate_id, "rank": idx, "score": s.final_score, "reasoning": s.reasoning}
+                        for idx, s in enumerate(results, 1)
+                    ])
+                    csv_bytes = output_df.to_csv(index=False).encode('utf-8')
+                    
+                    st.download_button(
+                        label="⬇️ Download Ranked CSV",
+                        data=csv_bytes,
+                        file_name="sandbox_output.csv",
+                        mime="text/csv",
+                        type="primary"
+                    )
 
                 except Exception as e:
                     st.error(f"Pipeline error during live run: {e}")
