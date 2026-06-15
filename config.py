@@ -6,8 +6,8 @@ If a value needs changing, change it here only.
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 CANDIDATES_JSONL = "data/raw/candidates.jsonl"
-OUTPUT_CSV        = "6a159a16188af89836505d14.csv"
-LOGS_PATH         = "logs/errors.log"
+OUTPUT_CSV       = "Tech-Warriors-2824.csv"
+LOGS_PATH        = "logs/errors.log"
 
 # ─── Model ────────────────────────────────────────────────────────────────────
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"

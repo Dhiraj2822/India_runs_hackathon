@@ -62,7 +62,7 @@ SPACY_MODEL     = "en_core_web_sm"
 DEVICE          = "cpu"   # GPU forbidden per submission spec
 
 # ─── Pipeline thresholds ──────────────────────────────────────────────────────
-TOP_K_STAGE1 = 5000   # Stage 1 fast filter keeps top 5,000
+TOP_K_STAGE1 = 2000   # Stage 1 fast filter keeps top 2,000
 TOP_K_STAGE2 = 200    # Stage 2 semantic scoring keeps top 200
 TOP_K_FINAL  = 100    # Final output is exactly 100
 

@@ -4,16 +4,21 @@
 # ============================================================================
 # Team identity
 # ============================================================================
-team_name: "Dhiraj-Team"
+team_name: "Tech-Warriors-2824"
 primary_contact:
-  name: "Dhiraj"
-  email: "dhiraj2822@gmail.com"
-  phone: "+91-9876543210"
+  name: "Disharth Patel"
+  email: "disharthpatel@gmail.com"
+  phone: "+919824922220"
 
 team_members:
-  - name: "Dhiraj"
-    email: "dhiraj2822@gmail.com"
-    role: "Team Lead & ML Engineer"
+  - name: "Disharth Patel"
+    email: "disharthpatel@gmail.com"
+    phone: "+919824922220"
+    role: "Team Lead"
+  - name: "Dhiraj Sarawale"
+    email: "dhirajs102835@gmail.com"
+    phone: "+919022360291"
+    role: "Team Member"
 
 # ============================================================================
 # Code and reproducibility
@@ -22,8 +27,8 @@ github_repo: "https://github.com/Dhiraj2822/India_runs_hackathon" # Confirm URL
 sandbox_link: "https://dhiraj-redrob-ranker.streamlit.app"       # REQUIRED: Update after Streamlit deployment
 
 # Command used to reproduce ranking. Ensure participant ID filename matches in --out!
-reproduce_command: "python rank.py --candidates data/raw/candidates.jsonl --out 6a159a16188af89836505d14.csv"
-submission_file: "6a159a16188af89836505d14.csv"
+reproduce_command: "python rank.py --candidates data/raw/candidates.jsonl --out Tech-Warriors-2824.csv"
+submission_file: "Tech-Warriors-2824.csv"
 
 # ============================================================================
 # Model & Pipeline Constraints
@@ -71,7 +76,7 @@ ai_usage_summary: |
 methodology_summary: |
   A robust and fully deterministic two-stage candidate scoring and ranking system.
   Stage 1 performs fast structured filtering on all 100,000 profiles (skills, title relevance,
-  availability, location, domain) to select the top 5,000.
+  availability, location, domain) to select the top 2,000.
   Stage 2 computes local BAAI/bge-small-en-v1.5 embeddings for semantic fit with the job description
   and fuses it with skill quality, career fit, experience match, platform signals, and education tier.
   Includes 15 edge-case detectors (such as consulting penalties, job-hopper rules, and honeypot disqualifications)
