@@ -14,7 +14,7 @@ with a normalized score (0.0–1.0) and a per-candidate explanation.
 ## Architecture
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'edgeLabelBackground':'#f4f4f5', 'tertiaryColor': '#f3f4f6'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#f3f4f6', 'lineColor': '#9ca3af', 'textColor': '#000000'}}}%%
 graph TD
     %% Nodes
     A["📄 <b>candidates.jsonl</b><br/><i>100,000 Raw Profiles</i>"]
@@ -48,6 +48,8 @@ graph TD
     class D,E,F logic;
     class G ai;
     class H output;
+    
+    linkStyle default stroke:#8b5cf6,stroke-width:2px,color:#4c1d95;
 ```
 
 - `src/data_loader.py`: Parses the raw 100,000 JSONL candidates into structured Python dataclasses.
