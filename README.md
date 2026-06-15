@@ -13,24 +13,20 @@ with a normalized score (0.0–1.0) and a per-candidate explanation.
 
 ## Architecture
 
-```text
-candidates.jsonl
-       ↓
- [data_loader]
-       ↓
- [stage 1 filter]
-       ↓
-  [BGE embed]
-       ↓
- [stage 2 score]
-       ↓
-  [edge cases]
-       ↓
-    [ranker]
-       ↓
-  [reasoning]
-       ↓
- submission.csv
+```mermaid
+graph TD
+    A[candidates.jsonl] -->|100,000 Profiles| B(src/data_loader.py)
+    B --> C{src/scoring_engine.py<br>Stage 1 Filter}
+    C -->|Top 2,000| D(src/nlp_engine.py<br>BGE Embeddings)
+    D --> E(src/scoring_engine.py<br>Stage 2 Core Score)
+    E --> F(src/edge_cases.py<br>15 Edge Case Handlers)
+    F --> G(src/ranker.py<br>Ranker & Tie-Breaker)
+    G --> H(src/reasoning.py<br>Tiered Reasoning Generator)
+    H -->|Top 100| I[Tech-Warriors-2824.csv]
+
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef file fill:#e0f7fa,stroke:#006064,stroke-width:2px;
+    class A,I file;
 ```
 
 - `src/data_loader.py`: Parses the raw 100,000 JSONL candidates into structured Python dataclasses.
@@ -115,13 +111,13 @@ pip install -r requirements.txt
 python precompute.py
 
 ### Run ranking (no network, must complete in < 5 minutes)
-python rank.py --candidates ./data/raw/candidates.jsonl --out ./submission.csv
+python rank.py --candidates ./data/raw/candidates.jsonl --out ./Tech-Warriors-2824.csv
 
 ### Validate output
-python validate_submission.py submission.csv
+python validate_submission.py Tech-Warriors-2824.csv
 
 ### Run quality checks
-python validate_quality.py --submission submission.csv --candidates data/raw/candidates.jsonl
+python validate_quality.py --submission Tech-Warriors-2824.csv --candidates data/raw/candidates.jsonl
 
 ### Run all tests
 pytest tests/ -v

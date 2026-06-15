@@ -33,3 +33,11 @@ output/
 
 # Personal study notes — DO NOT PUSH TO GITHUB
 study_notes/
+
+# Internal AI Documentation
+AGENT_INSTRUCTIONS.md
+IMPLEMENTATION_PLAN.md
+TRD.md
+BACKEND_SCHEMA.md
+modules/
+
