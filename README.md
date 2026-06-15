@@ -49,7 +49,7 @@ graph TD
     class G ai;
     class H output;
     
-    linkStyle default stroke:#8b5cf6,stroke-width:2px,color:#4c1d95;
+    linkStyle default stroke:#8b5cf6,stroke-width:2px;
 ```
 
 - `src/data_loader.py`: Parses the raw 100,000 JSONL candidates into structured Python dataclasses.
