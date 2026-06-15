@@ -14,19 +14,40 @@ with a normalized score (0.0–1.0) and a per-candidate explanation.
 ## Architecture
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'edgeLabelBackground':'#f4f4f5', 'tertiaryColor': '#f3f4f6'}}}%%
 graph TD
-    A[candidates.jsonl] -->|100,000 Profiles| B(src/data_loader.py)
-    B --> C{src/scoring_engine.py<br>Stage 1 Filter}
-    C -->|Top 2,000| D(src/nlp_engine.py<br>BGE Embeddings)
-    D --> E(src/scoring_engine.py<br>Stage 2 Core Score)
-    E --> F(src/edge_cases.py<br>15 Edge Case Handlers)
-    F --> G(src/ranker.py<br>Ranker & Tie-Breaker)
-    G --> H(src/reasoning.py<br>Tiered Reasoning Generator)
-    H -->|Top 100| I[Tech-Warriors-2824.csv]
+    %% Nodes
+    A["📄 <b>candidates.jsonl</b><br/><i>100,000 Raw Profiles</i>"]
+    B{"⚡ <b>Stage 1 Filter</b><br/><i>src/scoring_engine.py</i><br/>Title, Skills, Availability"}
+    C["🧠 <b>BGE Embeddings</b><br/><i>src/nlp_engine.py</i><br/>BAAI/bge-small-en-v1.5"]
+    D{"🧮 <b>Stage 2 Core Score</b><br/><i>src/scoring_engine.py</i><br/>Semantic Match, Skill Quality"}
+    E["🛡️ <b>Edge Cases</b><br/><i>src/edge_cases.py</i><br/>1 Honeypot + 20 Rules"]
+    F["🔀 <b>Ranker</b><br/><i>src/ranker.py</i><br/>Sort & Tie-Breaker"]
+    G["💬 <b>Reasoning Engine</b><br/><i>src/reasoning.py</i><br/>Dynamic Explanations"]
+    H["📊 <b>Tech-Warriors-2824.csv</b><br/><i>Top 100 Output</i>"]
 
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef file fill:#e0f7fa,stroke:#006064,stroke-width:2px;
-    class A,I file;
+    %% Edges
+    A -->|Parse| B
+    B -->|Top 2,000 Candidates<br>~2.1 seconds| C
+    C -->|Dense Vectors| D
+    D -->|Core Scores| E
+    E -->|Penalties & Multipliers| F
+    F -->|Top 100| G
+    G -->|Final Format| H
+
+    %% Styling
+    classDef input fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px,color:#312e81
+    classDef filter fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#9a3412
+    classDef ai fill:#fce7f3,stroke:#db2777,stroke-width:2px,color:#9d174d
+    classDef logic fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#166534
+    classDef output fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+
+    class A input;
+    class B filter;
+    class C ai;
+    class D,E,F logic;
+    class G ai;
+    class H output;
 ```
 
 - `src/data_loader.py`: Parses the raw 100,000 JSONL candidates into structured Python dataclasses.
@@ -171,6 +192,6 @@ pytest tests/ -v
 ## Submission Metadata
 
 - GitHub: https://github.com/Dhiraj2822/India_runs_hackathon
-- Sandbox: Coming soon — Streamlit Cloud deployment in progress
+- Sandbox: https://dhiraj2822-redrob-ranker.streamlit.app
 - Embedding model: BAAI/bge-small-en-v1.5
 - AI tools declared: Claude (Anthropic) — architecture design and specifications

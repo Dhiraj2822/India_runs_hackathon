@@ -24,7 +24,7 @@ team_members:
 # Code and reproducibility
 # ============================================================================
 github_repo: "https://github.com/Dhiraj2822/India_runs_hackathon" # Confirm URL
-sandbox_link: "https://dhiraj-redrob-ranker.streamlit.app"       # REQUIRED: Update after Streamlit deployment
+sandbox_link: "https://dhiraj2822-redrob-ranker.streamlit.app"       # REQUIRED: Update after Streamlit deployment
 
 # Command used to reproduce ranking. Ensure participant ID filename matches in --out!
 reproduce_command: "python rank.py --candidates data/raw/candidates.jsonl --out Tech-Warriors-2824.csv"
