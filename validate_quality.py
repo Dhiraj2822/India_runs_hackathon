@@ -8,8 +8,16 @@ Usage:
 """
 import argparse
 import json
+import sys
 from collections import defaultdict
 from datetime import date
+
+# Force UTF-8 for Windows terminals
+if sys.stdout.encoding.lower() != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
 
 import pandas as pd
 
@@ -32,32 +40,32 @@ def check_technical(df, cmap):
     issues = []
 
     # Row count
-    status = "✅" if len(df) == 100 else "❌"
+    status = "[PASS]" if len(df) == 100 else "[FAIL]"
     print(f"{status} Row count: {len(df)} (must be 100)")
     if len(df) != 100:
         issues.append("Wrong row count")
 
     # Columns
     expected = ["candidate_id", "rank", "score", "reasoning"]
-    status = "✅" if list(df.columns) == expected else "❌"
+    status = "[PASS]" if list(df.columns) == expected else "[FAIL]"
     print(f"{status} Columns: {list(df.columns)}")
     if list(df.columns) != expected:
         issues.append("Wrong columns")
 
     # Ranks 1-100 unique
     ranks = sorted(df["rank"].tolist())
-    status = "✅" if ranks == list(range(1, 101)) else "❌"
+    status = "[PASS]" if ranks == list(range(1, 101)) else "[FAIL]"
     print(f"{status} Ranks 1-100 unique: {ranks == list(range(1, 101))}")
     if ranks != list(range(1, 101)):
         issues.append("Ranks not 1-100 or duplicates exist")
 
     # Candidate IDs unique
-    status = "✅" if df["candidate_id"].nunique() == 100 else "❌"
+    status = "[PASS]" if df["candidate_id"].nunique() == 100 else "[FAIL]"
     print(f"{status} Candidate IDs unique: {df['candidate_id'].nunique() == 100}")
 
     # All candidate IDs exist in dataset
     bad_ids = [cid for cid in df["candidate_id"] if cid not in cmap]
-    status = "✅" if not bad_ids else "❌"
+    status = "[PASS]" if not bad_ids else "[FAIL]"
     print(f"{status} All IDs exist in dataset: {not bad_ids}")
     if bad_ids:
         print(f"    BAD IDs: {bad_ids[:5]}")
@@ -67,7 +75,7 @@ def check_technical(df, cmap):
     sorted_df = df.sort_values("rank")
     scores = sorted_df["score"].tolist()
     non_increasing = all(scores[i] >= scores[i + 1] - 1e-9 for i in range(len(scores) - 1))
-    status = "✅" if non_increasing else "❌"
+    status = "[PASS]" if non_increasing else "[FAIL]"
     print(f"{status} Scores non-increasing: {non_increasing}")
     if not non_increasing:
         for i in range(len(scores) - 1):
@@ -78,7 +86,7 @@ def check_technical(df, cmap):
 
     # Score differentiation
     unique_scores = df["score"].nunique()
-    status = "✅" if unique_scores >= 70 else "⚠️"
+    status = "[PASS]" if unique_scores >= 70 else "[WARN]"
     print(f"{status} Unique score values: {unique_scores}/100 (want ≥ 70)")
     if unique_scores < 50:
         issues.append("Scores too similar — model not differentiating")
@@ -87,27 +95,27 @@ def check_technical(df, cmap):
     score_min = df["score"].min()
     score_max = df["score"].max()
     score_range = score_max - score_min
-    status = "✅" if score_range > 0.15 else "⚠️"
+    status = "[PASS]" if score_range > 0.15 else "[WARN]"
     print(f"{status} Score range: {score_min:.4f} → {score_max:.4f} (range={score_range:.4f}, want >0.15)")
 
     # No empty reasoning
     empty_r = df["reasoning"].isna().sum() + (df["reasoning"] == "").sum()
-    status = "✅" if empty_r == 0 else "❌"
+    status = "[PASS]" if empty_r == 0 else "[FAIL]"
     print(f"{status} Empty reasoning strings: {empty_r} (must be 0)")
     if empty_r > 0:
         issues.append(f"{empty_r} empty reasoning strings")
 
     # Reasoning uniqueness
     unique_r = df["reasoning"].nunique()
-    status = "✅" if unique_r >= 90 else "⚠️"
+    status = "[PASS]" if unique_r >= 90 else "[WARN]"
     print(f"{status} Unique reasoning strings: {unique_r}/100 (want ≥ 90)")
     if unique_r < 90:
         issues.append("Reasoning too templated — too many identical strings")
 
-    print(f"\nTechnical result: {'PASS ✅' if not issues else 'FAIL ❌'}")
+    print(f"\nTechnical result: {'[PASS]' if not issues else '[FAIL]'}")
     if issues:
         for i in issues:
-            print(f"  ❌ {i}")
+            print(f"  [FAIL] {i}")
     return issues
 
 
@@ -160,17 +168,17 @@ def check_top10_quality(df, cmap):
         # Flags
         flags = []
         if not title_ok:
-            flags.append(f"⚠️  NON-AI TITLE: {title}")
+            flags.append(f"[WARN] NON-AI TITLE: {title}")
         if is_consulting_only:
-            flags.append(f"⚠️  CONSULTING COMPANY: {company}")
+            flags.append(f"[WARN] CONSULTING COMPANY: {company}")
         if not open_work:
-            flags.append("⚠️  NOT OPEN TO WORK")
+            flags.append("[WARN] NOT OPEN TO WORK")
         if days_inactive > 60:
-            flags.append(f"⚠️  INACTIVE {days_inactive} DAYS")
+            flags.append(f"[WARN] INACTIVE {days_inactive} DAYS")
         if notice > 90:
-            flags.append(f"⚠️  NOTICE {notice} DAYS")
+            flags.append(f"[WARN] NOTICE {notice} DAYS")
 
-        marker = "✅" if not flags else "⚠️"
+        marker = "[PASS]" if not flags else "[WARN]"
         print(f"Rank {row['rank']:3d} {marker}  score={row['score']:.4f}")
         print(f"         {title} | {years:.1f}yr | {company}")
         print(f"         Open={open_work} | Inactive={days_inactive}d | Response={response:.2f} | Notice={notice}d")
@@ -182,10 +190,10 @@ def check_top10_quality(df, cmap):
                 issues.append(f"Rank {row['rank']}: {flag}")
         print()
 
-    print(f"Top-10 result: {'CLEAN ✅' if not issues else 'PROBLEMS FOUND ⚠️'}")
+    print(f"Top-10 result: {'[CLEAN]' if not issues else '[PROBLEMS FOUND]'}")
     if issues:
         for i in issues:
-            print(f"  ❌ {i}")
+            print(f"  [FAIL] {i}")
         print("\n  If top 10 has non-AI titles or consulting-only companies,")
         print("  your Stage 1 title scoring or Stage 2 career_fit scoring is wrong.")
     return issues
@@ -220,17 +228,17 @@ def check_honeypots(df, cmap):
                 f"exp inflation: claimed {years}yr but history shows {career_months/12:.1f}yr"))
 
     if honeypots_in_top100:
-        print(f"❌ HONEYPOTS FOUND IN TOP 100: {len(honeypots_in_top100)}")
+        print(f"[FAIL] HONEYPOTS FOUND IN TOP 100: {len(honeypots_in_top100)}")
         for rank, cid, reason in honeypots_in_top100:
             print(f"   Rank {rank}: {cid} — {reason}")
         rate = len(honeypots_in_top100) / 100
         print(f"\n   Rate: {rate:.0%} (limit is 10%)")
         if rate > 0.10:
-            print("   ❌ EXCEEDS 10% LIMIT — WOULD BE DISQUALIFIED")
+            print("   [FAIL] EXCEEDS 10% LIMIT — WOULD BE DISQUALIFIED")
         else:
-            print("   ⚠️  Below limit but still bad — fix edge cases")
+            print("   [WARN] Below limit but still bad — fix edge cases")
     else:
-        print("✅ No obvious honeypots detected in top 100")
+        print("[PASS] No obvious honeypots detected in top 100")
     return honeypots_in_top100
 
 
@@ -266,7 +274,7 @@ def check_score_spread(df):
     }
 
     for label, count in buckets.items():
-        bar = "█" * count
+        bar = "=" * count
         print(f"  {label:25s}: {count:3d}  {bar}")
 
     print(f"\n  Rank 1  score: {scores[0]:.4f}")
@@ -276,13 +284,13 @@ def check_score_spread(df):
 
     # Ideal: rank 1 > 0.75, rank 100 < 0.65, good spread
     if scores[0] < 0.70:
-        print("\n  ⚠️  Rank 1 score is low (<0.70). Top candidate may not be truly excellent.")
+        print("\n  [WARN] Rank 1 score is low (<0.70). Top candidate may not be truly excellent.")
     if scores[99] > 0.75:
-        print("\n  ⚠️  Rank 100 score is high (>0.75). Scoring not differentiating enough.")
+        print("\n  [WARN] Rank 100 score is high (>0.75). Scoring not differentiating enough.")
     if scores[0] - scores[99] < 0.10:
-        print("\n  ❌ Score range too small (<0.10). All candidates scoring similarly.")
+        print("\n  [FAIL] Score range too small (<0.10). All candidates scoring similarly.")
     else:
-        print(f"\n  ✅ Score range: {scores[0] - scores[99]:.4f}")
+        print(f"\n  [PASS] Score range: {scores[0] - scores[99]:.4f}")
 
 
 def print_final_verdict(tech_issues, top10_issues, honeypots):
@@ -292,25 +300,25 @@ def print_final_verdict(tech_issues, top10_issues, honeypots):
 
     all_clear = not tech_issues and not top10_issues and not honeypots
     if all_clear:
-        print("✅ LOOKS GOOD — ready to submit")
+        print("[PASS] LOOKS GOOD — ready to submit")
         print("\nBefore submitting:")
         print("  1. Confirm filename = your Hack2Skill participant ID")
         print("  2. Run: python validate_submission.py YOUR_ID.csv")
         print("  3. Review top 10 one more time manually")
         print("  4. Submit early — earlier timestamp wins tiebreaks")
     else:
-        print("❌ ISSUES FOUND — fix before submitting\n")
+        print("[FAIL] ISSUES FOUND — fix before submitting\n")
         if tech_issues:
             print("Technical fixes needed:")
             for i in tech_issues:
-                print(f"  ❌ {i}")
+                print(f"  [FAIL] {i}")
         if top10_issues:
             print("\nTop-10 quality fixes needed:")
             for i in top10_issues:
-                print(f"  ⚠️  {i}")
+                print(f"  [WARN] {i}")
         if honeypots:
             print("\nHoneypot fixes needed:")
-            print(f"  ❌ {len(honeypots)} honeypots in top 100 — fix edge_cases.py")
+            print(f"  [FAIL] {len(honeypots)} honeypots in top 100 — fix edge_cases.py")
 
         print("\nWhere to look:")
         if any("NON-AI TITLE" in str(i) for i in top10_issues):
