@@ -33,7 +33,7 @@ COPY config.py rank.py precompute.py validate_submission.py validate_quality.py 
 # Default command: ranking step (no network, uses pre-cached model)
 CMD ["python", "rank.py", \
      "--candidates", "./data/raw/candidates.jsonl", \
-     "--out", "./submission.csv"]
+     "--out", "./Tech-Warriors-2824.csv"]
 
 # ─── How to build and run ────────────────────────────────────────────────────
 #
