@@ -186,10 +186,10 @@ tab_leaderboard, tab_sandbox, tab_reproduce = st.tabs(
 with tab_leaderboard:
     st.markdown("### Top Ranked Candidates (Full 100K Dataset)")
     st.write(
-        "Below is the current `submission.csv` containing the top 100 candidates sorted and filtered by our 2-stage scoring engine."
+        "Below is the current `Tech-Warriors-2824.csv` containing the top 100 candidates sorted and filtered by our 2-stage scoring engine."
     )
 
-    csv_path = Path("submission.csv")
+    csv_path = Path("Tech-Warriors-2824.csv")
     if csv_path.exists():
         try:
             df = pd.read_csv(csv_path)
