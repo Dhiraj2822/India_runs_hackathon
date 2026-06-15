@@ -1,6 +1,6 @@
 # Intelligent Candidate Discovery & Ranking System
 ## India Runs Hackathon — Track 1 | Redrob AI × Hack2Skill
-**Participant:** Dhiraj Sarawale | MIT ADT University, Pune
+**Team:** Tech-Warriors-2824 | **Team Lead:** Disharth Patel | **Member:** Dhiraj Sarawale
 
 ---
 
@@ -166,17 +166,9 @@ pytest tests/ -v
 | candidate_id | rank | score | reasoning |
 |---|---|---|---|
 | CAND_0041669 | 1 | 1.0 | Strong open-source coder (71/100 GitHub). 8.0 years at CRED working as a Recommendation Systems Engineer; skilled in vector database, semantic search, weaviate. |
-<br>
-
 | CAND_0079387 | 2 | 0.9947 | Highly responsive candidate (0.81 rate). 6.9 years at Microsoft working as a AI Engineer utilizing vector database, opensearch, ranking. |
-<br>
-
 | CAND_0062247 | 3 | 0.941 | 7.3 years at Google working as a AI Engineer; highly experienced with vector database, pinecone, qdrant. |
-<br>
-
 | CAND_0052682 | 4 | 0.9301 | Strong open-source coder (72/100 GitHub). 6.6 years at Aganitha working as a NLP Engineer; skilled in embeddings, vector database, semantic search. |
-<br>
-
 | CAND_0064326 | 5 | 0.9119 | 7.6 years at Sarvam AI working as a Search Engineer; highly experienced with vector database, semantic search, weaviate. |
 
 ---
