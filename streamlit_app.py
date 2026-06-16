@@ -16,7 +16,6 @@ from config import (
     W1_DOMAIN,
     W1_SKILLS,
     W1_TITLE,
-    W2_BEHAVIORAL,
     W2_CAREER_FIT,
     W2_EDUCATION,
     W2_EXPERIENCE,
@@ -161,7 +160,6 @@ st.sidebar.markdown(
 - Skill Quality: `{W2_SKILL_QUALITY:.0%}`
 - Career Fit: `{W2_CAREER_FIT:.0%}`
 - Experience Match: `{W2_EXPERIENCE:.0%}`
-- Platform Signals: `{W2_BEHAVIORAL:.0%}`
 - Education Tier: `{W2_EDUCATION:.0%}`
 """
 )
