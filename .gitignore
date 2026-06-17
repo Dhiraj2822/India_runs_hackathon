@@ -1,7 +1,5 @@
 # Dataset — 475MB, judges have their own copy
 data/raw/candidates.jsonl
-data/raw/sample_candidates.json
-
 # Auto-generated embeddings cache
 data/embeddings/
 
