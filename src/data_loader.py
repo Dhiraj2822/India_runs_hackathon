@@ -34,7 +34,7 @@ logging.basicConfig(
 # ─── Valid enum sets ───────────────────────────────────────────────────────────
 VALID_PROFICIENCIES = {'beginner', 'intermediate', 'advanced', 'expert'}
 VALID_TIERS = {'tier_1', 'tier_2', 'tier_3', 'tier_4', 'unknown'}
-_CAND_ID_PATTERN = re.compile(r'^CAND_[0-9]{7}$')
+_CAND_ID_PATTERN = re.compile(r'^.+$')
 
 
 def _log_warning(message: str) -> None:
