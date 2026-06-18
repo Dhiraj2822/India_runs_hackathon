@@ -1,5 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-torch
+
 sentence-transformers==2.7.0
 streamlit>=1.33.0
 spacy==3.7.4
