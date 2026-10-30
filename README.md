@@ -54,8 +54,8 @@ graph TD
 
 - `src/data_loader.py`: Parses the raw 100,000 JSONL candidates into structured Python dataclasses.
 - `src/nlp_engine.py`: Encodes text using the BAAI/bge-small-en-v1.5 model and computes cosine similarity.
-- `src/scoring_engine.py`: Computes the Stage 1 fast filter and the 6-component Stage 2 core score.
-- `src/edge_cases.py`: Detects honeypots and applies 15+ penalty/bonus rules to the candidate score.
+- `src/scoring_engine.py`: Computes the Stage 1 fast filter and the 5-component Stage 2 core score (applied with a behavioral multiplier).
+- `src/edge_cases.py`: Detects honeypots (via 6 automated checks) and applies 20 penalty/bonus rules to candidate scores.
 - `src/ranker.py`: Orchestrates the pipeline, executes the ranking, and sorts the final list with tie-breakers.
 - `src/reasoning.py`: Generates the personalized, tiered reasoning string explaining why each candidate was ranked.
 
@@ -85,16 +85,16 @@ Behavioral signals (availability and engagement) compute a multiplier in `_s2_be
 ## Key Design Decisions
 
 **Why BAAI/bge-small-en-v1.5 over all-MiniLM-L6-v2**
-BGE-small is explicitly optimized for retrieval and sentence similarity, whereas MiniLM is a more generic sentence transformer. BGE provides superior context matching for dense technical concepts like mapping "Pinecone" to "vector database". It remains lightweight enough (133MB) to run comfortably on CPU constraints while delivering state-of-the-art embedding quality.
+BGE-small is explicitly optimized for retrieval and sentence similarity, whereas MiniLM is a more generic sentence transformer. BGE provides superior context matching for dense technical concepts like mapping "Pinecone" to "vector database". It remains lightweight enough (133MB) to run comfortably on CPU constraints while delivering a strong, retrieval-optimized small representation model.
 
-**Why 2-stage pipeline (not embedding all 100K)**
-Embedding 100,000 profiles using a dense transformer on CPU would exceed the 5-minute hackathon time limit, taking nearly two hours. We use a blazing fast deterministic Stage 1 filter to winnow the dataset from 100K to 2,000 candidates in ~2.1 seconds. Only the top 2,000 highly plausible candidates proceed to the expensive Stage 2 embedding, keeping total runtime under 2.5 minutes.
+**Why 2-stage pipeline (and tuning the filter from 5,000 to 2,000)**
+Embedding 100,000 profiles using a dense transformer on CPU would exceed the 5-minute hackathon time limit, taking nearly two hours. We use a blazing fast deterministic Stage 1 filter to winnow the dataset from 100K in ~2.1 seconds. We initially tested retaining the top 5,000 candidates for Stage 2, but running BGE embeddings on 5,000 profiles on CPU took ~364 seconds—breaching the strict 300-second disqualification threshold. Benchmarking showed that tuning the cutoff to 2,000 candidates brought total runtime down to ~143 seconds without compromising top-100 ranking quality, as candidates between ranks 2,001 and 5,000 had near-zero relevance overlap with the target role.
 
-**Why skill_quality weight is higher than semantic weight**
-`skill_quality` is weighted at 0.28 because proficiency level × duration × platform assessment scores provide objective, verifiable evidence of skill depth — more reliable than semantic similarity alone, which can be gamed by writing AI-heavy summaries.
+**Why skill quality carries 0.28 even though semantic similarity is the largest single weight (0.35)**
+While semantic similarity (`W2_SEMANTIC: 0.35`) anchors profile-to-JD alignment, `skill_quality` carries a substantial 0.28 weight because proficiency level × duration × platform assessment scores provide objective, verifiable evidence of skill depth. Semantic similarity alone can be gamed by keyword stuffing or AI-generated summaries, whereas verified duration and platform assessment scores cannot.
 
 **How honeypot detection works and why it matters**
-The `_detect_honeypot` function scans for impossible combinations: fake companies (e.g., Dunder Mifflin), inflated experience (0 months in history but claiming years), contradictory domains, perfect scores with 0 evidence, and impossibly short durations for senior roles. This prevents trap candidates from artificially gaming the Stage 1 keywords and reaching the top 100.
+Submissions with >10% honeypots in the top 100 are automatically disqualified. The `_detect_honeypot` function scans for 6 distinct impossibility signals: (1) claiming expert proficiency with 0 months duration, (2) expert status with zero endorsements, zero duration, and no assessment, (3) experience inflation where claimed years exceed career history by >5 years, (4) single role tenure exceeding 30 years, (5) 80%+ JD skill coverage with zero duration/evidence, and (6) fictional companies (e.g., Dunder Mifflin, Hooli, Initech, Pied Piper, Vandelay Industries). Flagged honeypots receive a score of 0.0, completely preventing trap profiles from entering the top 100.
 
 ---
 
